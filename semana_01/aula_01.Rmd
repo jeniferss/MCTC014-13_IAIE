@@ -1,0 +1,118 @@
+### Aula Prática 01
+
+Estimação usando a técnica *Bootstrap*: as amostragens são feitas ao acaso com reposição, ou seja, um mesmo valo pode se repetir.
+
+```{r}
+sample_list = c(10, 20, 30, 40)
+sample_size = length(sample_list)
+
+bootstrap_mean = vector()
+
+for (index in 1:1000) {
+  bootstrap_sample = sample(sample_list, sample_size, replace = TRUE)
+  bootstrap_mean[index] = mean(bootstrap_sample)
+}
+
+plot(
+  bootstrap_mean,
+  main="Média Bootstrap", 
+  xlab="Posição", 
+  ylab="Média",
+)
+
+plot(
+  sort(bootstrap_mean),
+  main="Média Ordenada Bootstrap", 
+  xlab="Posição", 
+  ylab="Média",
+)
+
+hist(
+  bootstrap_mean,
+  main="Histograma Média Bootstrap", 
+  xlab="Média", 
+  ylab="Frequência",
+)
+```
+
+Teste de hipótese usando a técnica *Permutação*: fazer amostragens ao acaso de mesmo tamanho sem reposição, ou seja, sem repetição de um mesmo elemento.
+
+```{r}
+measure = c(10, 20, 30, 40, 40, 50, 60, 70, 80)
+group = c(1, 1, 1, 1, 2, 2, 2, 2, 2)
+
+plot(
+  group, 
+  measure,
+  main="Medidas por Grupo", 
+  xlab="Grupo", 
+  ylab="Medidas",
+)
+
+plot(
+  group, 
+  measure, 
+  xlim=c(0, 3),
+  main="Medidas por Grupo Centralizadas", 
+  xlab="Grupo", 
+  ylab="Medidas",
+)
+
+# quais são os elementos de group que tem valor 1
+group==1 
+
+# quais são os elementos de measure que pertencem ao grupo 1
+measure[group==1] 
+
+# qual a média dos elementos de measure que pertencem ao grupo 1
+mean(measure[group==1]) 
+
+# diferença entre as médias das medidas dos grupos 1 e 2
+mean_diff = mean(measure[group==1]) - mean(measure[group==2])
+mean_diff
+```
+
+```{r}
+permutation_measure = c(10, 20, 30, 40, 40, 50, 60, 70, 80)
+permutation_group = c(1, 1, 1, 1, 2, 2, 2, 2, 2)
+
+permutation_mean_diff = vector()
+
+for (index in 1:1000){
+  permutation_sample = sample(
+    permutation_measure, 
+    length(measure), 
+    replace = FALSE
+  )
+  permutation_mean_diff[index] = mean(
+    permutation_sample[group==1]
+  ) - mean(
+    permutation_sample[group==2]
+  )
+}
+
+plot(
+  permutation_mean_diff,
+  main="Delta Média Permutação", 
+  xlab="Posição", 
+  ylab="Delta Média"
+)
+
+plot(
+  sort(permutation_mean_diff),
+  main="Delta Média Permutação Ordenado", 
+  xlab="Posição", 
+  ylab="Delta Média"
+)
+
+hist(
+  permutation_mean_diff,
+  main="Histograma Delta Média Permutação", 
+  xlab="Média", 
+  ylab="Frequência"
+)
+
+# qual a chance de que ao acaso, o valor encontrado para a média na distribui,cão seja menor ou igual ao valor da média da amostra
+mean(permutation_mean_diff <= mean_diff)
+
+```
