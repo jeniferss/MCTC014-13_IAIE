@@ -1,0 +1,92 @@
+### Aula 02
+
+Estatística Descritiva
+
+```{r}
+heights <- c(101, 109, 109, 113, 117, 187)
+
+# Média
+mean(heights)
+
+# Mediana
+median(heights)
+
+# Média Exata
+mean(heights, trim=0.2)
+
+# Jeito alternativo de gerar a moda
+most_common_value <- function(values){
+  output <- names(table(values))[table(values) == max(table(values))]
+  return(as.numeric(output))
+}
+
+most_common_value(heights)
+
+# Amplitude
+range(heights)
+diff(range(heights))
+
+# Variância
+var(heights)
+
+# Desvio Padrão
+sd(heights)
+
+# Intervalo Interquartil
+quantile(heights, probs = c(0.25, 0.75))
+plot(seq(0, 1, 0.05), quantile(heights, probs = seq(0, 1, 0.05)), 'l')
+
+```
+
+Inferência: as estatísticas amostrais podem estimar os parâmetros populacionais? Exemplo com $\bar{x}$ para estimar $\mu$ e $s^2$ para estimar $\sigma^2$
+
+```{r}
+
+population <- c(rep(1, 10000), rep(2, 10000), rep(3, 10000))
+
+pop_mean = mean(population)
+pop_var = var(population)
+
+pop_mean_oldschool = sum(population)/length(population)
+pop_var_oldschool = sum((population - pop_mean_oldschool)^2)/length(population)
+
+
+sample_size = 2
+
+sample_mean = vector()
+var_baised_sample = vector() # com viés
+var_unbaised_sample = vector() # sem viés
+
+for(i in 1:10000){
+  pop_sample = sample(population, sample_size, replace=FALSE)
+  sample_mean[i] = sum(pop_sample) / sample_size
+  var_baised_sample[i] = sum((pop_sample-sample_mean[i])^2)/sample_size
+  var_unbaised_sample[i] = sum((pop_sample-sample_mean[i])^2)/(sample_size - 1)
+}
+
+hist(
+  sample_mean,
+  main="Média Amostral", 
+  xlab="Média", 
+  ylab="Frequência"
+)
+
+hist(
+  var_baised_sample,
+  main="Variância Inviesada", 
+  xlab="Variância", 
+  ylab="Frequência"
+)
+
+hist(
+  var_unbaised_sample,
+  main="Variância Não Inviesada", 
+  xlab="Variância", 
+  ylab="Frequência"
+)
+
+mean(sample_mean)
+mean(var_baised_sample)
+mean(var_unbaised_sample)
+
+```
