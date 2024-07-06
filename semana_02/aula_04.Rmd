@@ -1,0 +1,174 @@
+### Aula Prática 04
+
+Exemplo: Examinando 500 peças, encontrou-se 260 defeituosas. Qual o intervalo de confiança de 95% da proporção de peças defeituosas?
+
+```{r}
+
+# Teórica
+samples = c(rep(1, 260), rep(0, 240))
+
+n = length(samples)
+xbar = mean(samples)
+
+s = sd(samples)
+sqrt(xbar * (1 - xbar))
+
+z = qnorm(0.975)
+t = qt(0.975, n-1)
+
+z*s/sqrt(n)
+xbar + c(-1, 1) * (z*s/sqrt(n))
+
+t*s/sqrt(n)
+xbar + c(-1, 1) * (t*s/sqrt(n))
+
+
+# Funçao padrão do R para intervalso de confiança
+t.test(samples)
+
+
+# bootstrap
+sample_mean_bootstrap <-vector()
+for (i in 1:10000) {
+  sample_bootstrap <- sample(samples, length(samples), replace = TRUE)
+  sample_mean_bootstrap[i] = mean(sample_bootstrap)
+}
+
+hist(
+  sample_mean_bootstrap,
+  xlab = 'Média',
+  ylab = 'Frequência',
+  main = 'Média Bootstrap',
+)
+
+quantile(sample_mean_bootstrap, c(0.025, 0.975))
+```
+
+Exemplo: A média e desvio padrão de uma amostra de 10 elementos são 8,7 e 2,0, respectivamente. Qual o Intervalo de Confiança da média com nível 95%?
+
+```{r}
+
+n <- 10
+xbar <- 8.7
+s = 2
+
+samples = rnorm(10)
+mean(samples)
+sd(samples)
+
+samples = (samples - mean(samples)) / sd(samples)
+samples = samples * s + xbar
+
+mean(samples)
+sd(samples)
+
+t.test(samples)
+
+sample_mean_bootstrap <- vector()
+for (i in 1:10000) {
+  sample_bootstrap <- sample(samples, length(samples), replace = TRUE)
+  sample_mean_bootstrap[i] = mean(sample_bootstrap)
+}
+
+hist(
+  sample_mean_bootstrap,
+  xlab = 'Média',
+  ylab = 'Frequência',
+  main = 'Média Bootstrap',
+)
+quantile(sample_mean_bootstrap, c(0.025, 0.975))
+```
+
+Exemplo: Pesquisa intenção de voto - Prefeitura SP 2020
+
+```{r}
+
+# teórica
+n = 2897
+prob = 0.23
+
+deviation = sqrt(prob * (1 - prob))
+
+ic95 = prob + qt(c(0.025, 0.975), df=n-1) * (deviation / sqrt(n))
+ic95
+ic95 - prob
+
+# nativa no R 
+samples = c(rep(1, prob*n), rep(0, (1-prob)*n))
+t.test(samples)
+
+# bootstrap
+sample_mean_bootstrap <- vector()
+for (i in 1:10000) {
+  sample_bootstrap <- sample(samples, length(samples), replace = TRUE)
+  sample_mean_bootstrap[i] = mean(sample_bootstrap)
+}
+
+hist(
+  sample_mean_bootstrap,
+  xlab = 'Média',
+  ylab = 'Frequência',
+  main = 'Média Bootstrap',
+)
+quantile(sample_mean_bootstrap, c(0.025, 0.975))
+```
+
+Intervalo de Confiança
+
+```{r}
+
+samples <- c(152, 154, 164, 184, 185, 187)
+
+sample_mean_bootstrap <- vector()
+sample_sd_bootstrap <- vector()
+sample_median_bootstrap <- vector()
+sample_iiq_bootstrap <- vector()
+
+for (i in 1:10000) {
+  sample_bootstrap <- sample(samples, length(samples), replace = TRUE)
+  
+  sample_mean_bootstrap[i] <- mean(sample_bootstrap)
+  sample_sd_bootstrap[i] <- sd(sample_bootstrap)
+  sample_median_bootstrap[i] <- median(sample_bootstrap)
+  sample_iiq_bootstrap[i] <- (
+    quantile(sample_bootstrap, 0.75) - quantile(sample_bootstrap, 0.25)
+  )
+}
+
+hist(
+  sample_mean_bootstrap,
+  xlab = 'Média',
+  ylab = 'Frequência',
+  main = 'Média Bootstrap',
+  breaks = seq(140, 200, 1)
+)
+quantile(sample_mean_bootstrap, c(0.025, 0.975))
+
+hist(
+  sample_sd_bootstrap,
+  xlab = 'Desvio Padrão',
+  ylab = 'Frequência',
+  main = 'Desvio Padrão Bootstrap',
+  breaks = seq(0, 25, 1)
+)
+quantile(sample_sd_bootstrap, c(0.025, 0.975))
+
+hist(
+  sample_median_bootstrap,
+  xlab = 'Mediana',
+  ylab = 'Frequência',
+  main = 'Mediana Bootstrap',
+  breaks = seq(140, 200, 1)
+)
+quantile(sample_median_bootstrap, c(0.025, 0.975))
+
+hist(
+  sample_iiq_bootstrap,
+  xlab = 'Q2',
+  ylab = 'Frequência',
+  main = 'Q2 Bootstrap',
+  breaks = seq(0, 40, 1)
+)
+quantile(sample_iiq_bootstrap, c(0.025, 0.975))
+
+```
