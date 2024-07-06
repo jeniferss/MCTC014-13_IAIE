@@ -29,6 +29,10 @@ Distribuição da Média de amostras para n=5000
 
 ```{r}
 
+population <- c(0, 1)
+mu <- mean(population)
+sigma <- sqrt(sum((population - mu) ^ 2) / length(population))
+
 sample_repetition <- 1:5000
 sample_sizes <- c(1, 2, 3, 4, 9, 16, 25, 36, 49, 64, 81, 100, 225, 400)
 
@@ -41,7 +45,7 @@ for (sample_size in sample_sizes){
   sample_deviations <- vector()
   
   for (rep in sample_repetition) {
-    face_or_crown <- sample(c(0, 1), sample_size, replace = TRUE)
+    face_or_crown <- sample(population, sample_size, replace = TRUE)
     sample_means[rep] <- mean(face_or_crown)
     sample_deviations[rep] <- sd(face_or_crown)
   }
@@ -52,7 +56,7 @@ for (sample_size in sample_sizes){
     main=main_title,
     xlab="Média",
     ylab="Frequência",
-    xlim=c(0, 1)
+    xlim=range(population)
   )
   
 
@@ -66,25 +70,162 @@ plot(
   sample_sizes,
   means,
   main='Média em função de n',
-  xlab='Lançamentos',
+  xlab='Tamanho de n',
   ylab='Média',
   xlim=range(sample_sizes),
-  ylim=c(0, 1)
+  ylim=range(population)
+)
+par(new = TRUE)
+plot(
+  range(sample_sizes),
+  mu * c(1, 1),
+  xlab = '',
+  ylab = '',
+  type = 'l',
+  col = 'red',
+  lwd = 3,
+  xlim = range(sample_sizes),
+  ylim = range(population),
+  axes = FALSE
 )
 
 plot(
   sample_sizes,
   deviations,
   main='Desvio padrão em função de n',
-  xlab='Lançamentos',
+  xlab='Tamanho de n',
   ylab='Desvio Padrão',
   xlim=range(sample_sizes),
-  ylim=c(0, 1)
+  ylim=c(0, max(deviations))
 )
+par(new = TRUE)
+plot(
+  sample_sizes,
+  sigma / sqrt(sample_sizes),
+  xlab = '',
+  ylab = '',
+  type = 'l',
+  col = 'red',
+  lwd = 3,
+  xlim = range(sample_sizes),
+  ylim=c(0, max(deviations)),
+  axes = FALSE
+)
+
+
+plot(
+  sample_sizes,
+  deviations / (sigma / sqrt(sample_sizes)),
+  main='Razão Desvio padrão e sigma/sqrt(n)',
+  xlab='Tamanho de n',
+  ylab='Razão',
+  xlim=range(sample_sizes),
+  ylim=c(0, 2)
+)
+par(new = TRUE)
+plot(
+  range(sample_sizes),
+  c(1, 1),
+  xlab = '',
+  ylab = '',
+  type = 'l',
+  col = 'red',
+  lwd = 3,
+  xlim = range(sample_sizes),
+  ylim=c(0, 2),
+  axes = FALSE
+)
+
 
 ```
 
 #### Dado
+
+```{r}
+
+population <- 1:6
+mu <- mean(population)
+sigma <- sqrt(sum((population - mu) ^ 2) / length(population))
+
+sample_repetition <- 1:5000
+sample_sizes <- c(1, 2, 3, 4, 9, 16, 25, 36, 49, 64, 81, 100, 225, 400)
+
+means <- vector()
+deviations <- vector()
+
+i = 1
+for (sample_size in sample_sizes){
+  sample_means <- vector()
+  sample_deviations <- vector()
+  
+  for (rep in sample_repetition) {
+    face_or_crown <- sample(population, sample_size, replace = TRUE)
+    sample_means[rep] <- mean(face_or_crown)
+    sample_deviations[rep] <- sd(face_or_crown)
+  }
+  
+  main_title <- sprintf("Histograma da Média para n = %d", sample_size)
+  hist(
+    sample_means,
+    main=main_title,
+    xlab="Média",
+    ylab="Frequência",
+    xlim=range(population)
+  )
+  
+
+  means[i] <- mean(sample_means)
+  deviations[i] <- sd(sample_means)
+
+  i <- i + 1
+}
+
+plot(
+  sample_sizes,
+  means,
+  main='Média em função de n',
+  xlab='Tamanho de n',
+  ylab='Média',
+  xlim=range(sample_sizes),
+  ylim=range(population)
+)
+par(new = TRUE)
+plot(
+  range(sample_sizes),
+  mu * c(1, 1),
+  xlab = '',
+  ylab = '',
+  type = 'l',
+  col = 'red',
+  lwd = 3,
+  xlim = range(sample_sizes),
+  ylim = range(population),
+  axes = FALSE
+)
+
+plot(
+  sample_sizes,
+  deviations,
+  main='Desvio padrão em função de n',
+  xlab='Tamanho de n',
+  ylab='Desvio Padrão',
+  xlim=range(sample_sizes),
+  ylim=c(0, max(deviations))
+)
+par(new = TRUE)
+plot(
+  sample_sizes,
+  sigma / sqrt(sample_sizes),
+  xlab = '',
+  ylab = '',
+  type = 'l',
+  col = 'red',
+  lwd = 3,
+  xlim = range(sample_sizes),
+  ylim=c(0, max(deviations)),
+  axes = FALSE
+)
+```
 
 #### Distribuição normal no R
 
