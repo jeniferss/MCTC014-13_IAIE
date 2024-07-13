@@ -1,0 +1,64 @@
+### Aula Prática 05
+
+Exemplo notas ENEM
+
+```{r}
+
+mu <- 600
+sigma <- 100
+
+n <- 100
+mu_course <- 618
+
+standard_error <- sigma / sqrt(n)
+z <- (mu_course - mu) / standard_error
+
+
+# Simular amostra
+samples <- rnorm(n)
+samples <- (samples - mean(samples)) / sd(samples)
+samples <- samples * standard_error + mu_course
+
+mean(samples)
+sd(samples)
+
+# Unicaudal
+t.test(samples, mu = mu, alternative = "greater")
+
+# Bicaudal
+t.test(samples, mu = mu, alternative = "two.side")
+
+# Unicaudal
+t.test(samples, mu = mu, alternative = "less")
+
+
+# Cálculo na mão
+# 1. Hipótese nula: mu_course = mu
+# 2. Hipótese altenativa: mu_course != mu
+# 3. Distruibuição da Hipótese Nula -> definir erro padrão
+# 4. Identificar regiões em que a hipótese nula é aceita ou rejeitada
+critical = qt( c(0.025, 0.975), df=99)
+critical
+
+critical_brute = critical * sigma + mu
+critical_brute
+
+# 5. Teste de significância da hipótese nula
+z > min(critical)
+z < max(critical)
+
+if ((z > min(critical)) & (z < max(critical))) {
+  print("Aceita a Hipótese Nula")
+} else {
+  print("Rejeita a Hipótese Nula")
+}
+
+# p-valor
+p_value = 2 * pt(z, df = 99)
+if (p_value > 1) {
+  p_value = 2 * (1 - pt(z, df = 99))
+}
+
+p_value
+
+```
