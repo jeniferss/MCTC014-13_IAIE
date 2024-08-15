@@ -1,0 +1,442 @@
+---
+title: "Phenotypic heterogeneity follows a growth-viability tradeoff in response to
+  amino acid identity"
+author: "Grupo 05"
+output: html_document
+---
+
+### Artigo
+
+O artigo escolhido tem como título "[Phenotypic heterogeneity follows a growth-viability tradeoff in response to amino acid identity](https://www.nature.com/articles/s41467-024-50602-8#Sec9)", lê-se em português como "A heterogeneidade fenotípica segue um trade-off de capacidade de crescimento em resposta à identidade de aminoácidos". Foi publicado na revista [Nature](https://www.nature.com/) em 02 de Agosto de 2024.
+
+### Importando Bibliotecas
+
+```{r}
+
+bibliotecas = c(
+  "BiocManager", 
+  "tidyverse", 
+  "ggplot2",
+  "viridis",
+  "readxl",
+  "dplyr",
+  "scales",
+  "flexmix",
+  "mvtnorm"
+)
+
+for (biblioteca in bibliotecas) {
+  if (!biblioteca %in% installed.packages()) {
+    if (biblioteca == "BiocManager") {
+      install.packages(biblioteca)
+      BiocManager::install("SingleCellExperiment")
+      next
+    } 
+    install.packages(biblioteca)
+  }
+}
+
+library(ggplot2)
+library(viridis)
+library(readxl)
+library(dplyr)
+library(scales)
+library(tidyverse)
+library(flexmix)
+library(mvtnorm)
+
+```
+
+### Importando dados
+
+```{r}
+
+rm(list = ls())
+
+PRO.preshift <- read.csv(file = './data/source/fig2ab/1230_H9_pre_pRPL28_1.csv')
+GLN.preshift <- read.csv(file = './data/source//fig2ab/1230_H10_pre_pRPL28_2.csv')
+PRO.2h <- read.csv(file = './data/source/fig2ab/221121_1630_A1_PRO_GFP.csv')
+GLN.2h <- read.csv(file = './data/source/fig2ab/221121_1630_A2_GLN_GFP.csv')
+PRO.4h <- read.csv(file = './data/source/fig2ab/221121_1830_E1_PRO_GFP.csv')
+GLN.4h <- read.csv(file = './data/source/fig2ab/221121_1830_E2_GLN_GFP.csv')
+PRO.6h <- read.csv(file = './data/source/fig2ab/221121_2030_A1_PRO_GFP.csv')
+GLN.6h <- read.csv(file = './data/source/fig2ab/221121_2030_A2_GLN_GFP.csv')
+PRO.8h <- read.csv(file = './data/source/fig2ab/221121_2230_E1_PRO_GFP.csv')
+GLN.8h <- read.csv(file = './data/source/fig2ab/221121_2230_E2_GLN_GFP.csv')
+PRO2.2h <- read.csv(file = './data/source/fig2ab/1430_C2_pRPL28_NLIMPRO.csv')
+GLN2.2h <- read.csv(file = './data/source/fig2ab/1430_C3_pRPL28_NLIMGLN.csv')
+PRO2.4h <- read.csv(file = './data/source/fig2ab/1630_F2_pRPL28_NLIMPRO.csv')
+GLN2.4h <- read.csv(file = './data/source/fig2ab/1630_F3_pRPL28_NLIMGLN.csv')
+PRO2.6h <- read.csv(file = './data/source/fig2ab/1830_C2_pRPL28_NLIMPRO.csv')
+GLN2.6h <- read.csv(file = './data/source/fig2ab/1830_C3_pRPL28_NLIMGLN.csv')
+PRO2.8h <- read.csv(file = './data/source/fig2ab/2030_F2_pRPL28_NLIMPRO.csv')
+GLN2.8h <- read.csv(file = './data/source/fig2ab/2030_F3_pRPL28_NLIMGLN.csv')
+PRO3.preshift <- read.csv(file = './data/source/fig2ab/231012_preshift_1.csv')
+GLN3.preshift <- read.csv(file = './data/source/fig2ab/231012_preshift_2.csv')
+PRO3.2h <- read.csv(file = './data/source/fig2ab/231012_1440_NLIMPRO.csv')
+GLN3.2h <- read.csv(file = './data/source/fig2ab/231012_1440_NLIMGLN.csv')
+PRO3.4h <- read.csv(file = './data/source/fig2ab/231012_1640_NLIMPRO.csv')
+GLN3.4h <- read.csv(file = './data/source/fig2ab/231012_1640_NLIMGLN.csv')
+PRO3.6h <- read.csv(file = './data/source/fig2ab/231012_1840_NLIMPRO.csv')
+GLN3.6h <- read.csv(file = './data/source/fig2ab/231012_1840_NLIMGLN.csv')
+PRO3.8h <- read.csv(file = './data/source/fig2ab/231012_2040_NLIMPRO.csv')
+GLN3.8h <- read.csv(file = './data/source/fig2ab/231012_2040_NLIMGLN.csv')
+
+
+
+# GeneList = readRDS("./data/external/GeneList.rds")
+# names(GeneList) <- gsub("\\.", "_", names(GeneList))
+# head(GeneList)
+# 
+# Jackson2020 = readRDS("./data/external/Jackson2020.rds")
+# head(Jackson2020)
+# 
+# load("./data/external/Airoldi2009.RData")
+```
+
+### Análise Exploratória
+
+#### Figura 2c
+
+*Funções nativas do R:*
+
+-   c(): gera um vetor;
+
+-   rep(): cria um vetor de n repetições do elemento informado;
+
+-   nrow(): retorna o número de linas de um DataFrame.
+
+```{r}
+
+# Mapeamento de condições
+conditions <- c(
+  rep('PRO', nrow(PRO.preshift)),
+  rep('GLN', nrow(GLN.preshift)),
+  rep('PRO', nrow(PRO.2h)),
+  rep('GLN', nrow(GLN.2h)),
+  rep('PRO', nrow(PRO.4h)),
+  rep('GLN', nrow(GLN.4h)),
+  rep('PRO', nrow(PRO.6h)),
+  rep('GLN', nrow(GLN.6h)),
+  rep('PRO', nrow(PRO.8h)),
+  rep('GLN', nrow(GLN.8h)),
+  rep('PRO', nrow(PRO2.2h)),
+  rep('GLN', nrow(GLN2.2h)),
+  rep('PRO', nrow(PRO2.4h)),
+  rep('GLN', nrow(GLN2.4h)),
+  rep('PRO', nrow(PRO2.6h)),
+  rep('GLN', nrow(GLN2.6h)),
+  rep('PRO', nrow(PRO2.8h)),
+  rep('GLN', nrow(GLN2.8h)),
+  rep('PRO', nrow(PRO3.preshift)),
+  rep('GLN', nrow(GLN3.preshift)),
+  rep('PRO', nrow(PRO3.2h)),
+  rep('GLN', nrow(GLN3.2h)),
+  rep('PRO', nrow(PRO3.4h)),
+  rep('GLN', nrow(GLN3.4h)),
+  rep('PRO', nrow(PRO3.6h)),
+  rep('GLN', nrow(GLN3.6h)),
+  rep('PRO', nrow(PRO3.8h)),
+  rep('GLN', nrow(GLN3.8h))
+)
+
+# Mapemaneto de tempo de ação
+time <- c(
+  rep('preshift', nrow(PRO.preshift)),
+  rep('preshift', nrow(GLN.preshift)),
+  rep('2h', nrow(PRO.2h)),
+  rep('2h', nrow(GLN.2h)),
+  rep('4h', nrow(PRO.4h)),
+  rep('4h', nrow(GLN.4h)),
+  rep('6h', nrow(PRO.6h)),
+  rep('6h', nrow(GLN.6h)),
+  rep('8h', nrow(PRO.8h)),
+  rep('8h', nrow(GLN.8h)),
+  rep('2h', nrow(PRO2.2h)),
+  rep('2h', nrow(GLN2.2h)),
+  rep('4h', nrow(PRO2.4h)),
+  rep('4h', nrow(GLN2.4h)),
+  rep('6h', nrow(PRO2.6h)),
+  rep('6h', nrow(GLN2.6h)),
+  rep('8h', nrow(PRO2.8h)),
+  rep('8h', nrow(GLN2.8h)),
+  rep('preshift', nrow(PRO3.preshift)),
+  rep('preshift', nrow(GLN3.preshift)),
+  rep('2h', nrow(PRO3.2h)),
+  rep('2h', nrow(GLN3.2h)),
+  rep('4h', nrow(PRO3.4h)),
+  rep('4h', nrow(GLN3.4h)),
+  rep('6h', nrow(PRO3.6h)),
+  rep('6h', nrow(GLN3.6h)),
+  rep('8h', nrow(PRO3.8h)),
+  rep('8h', nrow(GLN3.8h))
+)
+
+# Mapeamento de replicação
+replicate <- c(
+  rep('rep1', nrow(PRO.preshift)),
+  rep('rep1', nrow(GLN.preshift)),
+  rep('rep1', nrow(PRO.2h)),
+  rep('rep1', nrow(GLN.2h)),
+  rep('rep1', nrow(PRO.4h)),
+  rep('rep1', nrow(GLN.4h)),
+  rep('rep1', nrow(PRO.6h)),
+  rep('rep1', nrow(GLN.6h)),
+  rep('rep1', nrow(PRO.8h)),
+  rep('rep1', nrow(GLN.8h)),
+  rep('rep2', nrow(PRO2.2h)),
+  rep('rep2', nrow(GLN2.2h)),
+  rep('rep2', nrow(PRO2.4h)),
+  rep('rep2', nrow(GLN2.4h)),
+  rep('rep2', nrow(PRO2.6h)),
+  rep('rep2', nrow(GLN2.6h)),
+  rep('rep2', nrow(PRO2.8h)),
+  rep('rep2', nrow(GLN2.8h)),
+  rep('rep3', nrow(PRO3.preshift)),
+  rep('rep3', nrow(GLN3.preshift)),
+  rep('rep3', nrow(PRO3.2h)),
+  rep('rep3', nrow(GLN3.2h)),
+  rep('rep3', nrow(PRO3.4h)),
+  rep('rep3', nrow(GLN3.4h)),
+  rep('rep3', nrow(PRO3.6h)),
+  rep('rep3', nrow(GLN3.6h)),
+  rep('rep3', nrow(PRO3.8h)),
+  rep('rep3', nrow(GLN3.8h))
+)
+
+flexmix_MV_clustering = function(
+    data, 
+    p_tresh=0.95, 
+    dimensions=c("FSC.H","BL1.H"),
+    k=2,
+    cluster=NULL
+){
+  # Perform multivariate clustering
+  # data : dataframe with flow data
+  # p_tresh : value for the treshold to assign cells to cluster (default : 0.95)
+  # dimensions : dimensions to perform clustering on (default : c("FSC.H","BL1.H"))
+  
+  mo1 = FLXMCmvnorm()
+  mo2 = FLXMCmvnorm()
+  
+  data_mv_fit <- data %>% 
+    dplyr::select(all_of(dimensions))
+  
+  set.seed(123)
+  
+  if (is.null(cluster)) {
+    flexfit = flexmix(
+      as.matrix(data_mv_fit) ~ 1, 
+      data = data_mv_fit, 
+      k = k, 
+      model = list(mo1,mo2)
+    )
+  } else {
+    flexfit = flexmix(
+      as.matrix(data_mv_fit) ~ 1, 
+      data = data_mv_fit, 
+      k = k, 
+      model = list(mo1,mo2), 
+      cluster=cluster
+    )
+  }
+  
+  proba = posterior(flexfit)
+  clustered_data = cbind(data,proba)
+  
+  c1 <- parameters(flexfit, component=1)[[1]]
+  c2 <- parameters(flexfit, component=2)[[1]]
+  
+  cluster_means <- c(
+    parameters(flexfit, component=1)[[1]][1],
+    parameters(flexfit, component=2)[[1]][1]
+  )
+  
+  if (which.min(cluster_means) == 1) {
+    clustered_data <- dplyr::rename(clustered_data, "proba_low" = "1")
+    clustered_data <- dplyr::rename(clustered_data, "proba_high" = "2")
+  } else {
+    clustered_data <- dplyr::rename(clustered_data, "proba_low" = "2")
+    clustered_data <- dplyr::rename(clustered_data, "proba_high" = "1")
+  }
+  
+  clustered_data <- clustered_data %>% 
+    mutate(
+      classification = if_else(
+        proba_low > p_tresh, 
+        "Low", 
+        if_else(
+          proba_high > p_tresh , "High", "Unknown"
+        )
+      )
+    )
+  
+  clustered_data
+}
+
+data <- bind_rows(
+  PRO.preshift, 
+  GLN.preshift, 
+  PRO.2h, 
+  GLN.2h, 
+  PRO.4h, 
+  GLN.4h, 
+  PRO.6h, 
+  GLN.6h, 
+  PRO.8h, 
+  GLN.8h,
+  PRO2.2h, 
+  GLN2.2h, 
+  PRO2.4h, 
+  GLN2.4h, 
+  PRO2.6h, 
+  GLN2.6h, 
+  PRO2.8h, 
+  GLN2.8h,
+  PRO3.preshift, 
+  GLN3.preshift, 
+  PRO3.2h, 
+  GLN3.2h, 
+  PRO3.4h, 
+  GLN3.4h, 
+  PRO3.6h, 
+  GLN3.6h, 
+  PRO3.8h, 
+  GLN3.8h
+)
+
+data$conditions = conditions
+data$time = time
+data$replicate = replicate
+
+bulk_summary = data %>% 
+  group_by(
+    conditions,
+    time,
+    replicate
+  ) %>% 
+  summarize(
+    mean_pRPL28 = mean(BL1.H),
+    sd_pRPL28 = sd(BL1.H),
+    CV_pRPL28 = sd_pRPL28/mean_pRPL28,
+    mean_size = mean(FSC.H),
+    sd_size = sd(FSC.H),
+    CV_size = sd_size/mean_size
+  )
+
+clustered_data = flexmix_MV_clustering(
+  data %>%
+    filter(time=="4h" & conditions=="PRO" & replicate=="rep1")
+)
+
+mo1 <- FLXMCmvnorm()
+mo2 <- FLXMCmvnorm()
+
+data_mv_fit = data %>%
+  filter(time == "4h" & conditions == "PRO" & replicate == "rep1") %>% 
+  dplyr::select(all_of(c("FSC.H","BL1.H")))
+
+set.seed(123)
+
+flexfit = flexmix(
+  as.matrix(data_mv_fit) ~ 1, 
+  data = data_mv_fit, 
+  k = 2, 
+  model = list(mo1,mo2)
+)
+
+c1 = parameters(flexfit, component=1)[[1]]
+c2 = parameters(flexfit, component=2)[[1]]
+
+c_low = c(c1[1],c1[2])
+c_high = c(c2[1],c2[2])
+
+slope = (c_high[2]-c_low[2])/(c_high[1]-c_low[1])
+
+summary(clustered_data %>% filter(classification == "Unknown"))
+mid_point = c(72621, 33895)
+
+inverse_slope = -1/slope
+y_intercept = mid_point[2] - inverse_slope * mid_point[1]
+
+tresholded_data <- data %>% 
+  mutate(
+    hard_assign = ifelse(
+      BL1.H < inverse_slope * FSC.H + y_intercept, "Low", "High"
+    )
+  )
+
+timecourse_ratio <- tresholded_data %>% 
+  dplyr::select(c("conditions", "time", "replicate", "hard_assign")) %>%
+  group_by(conditions,time,replicate) %>%
+  summarize(
+    count_high = sum(hard_assign == "High"),
+    count_low = sum(hard_assign == "Low")
+  ) %>%
+  mutate(
+    ratio_low_to_high = count_low / count_high
+  )
+
+time_mapping <- c("2h" = 2, "4h" = 4, "6h" = 6, "8h" = 8,  "preshift" = 0)
+timecourse_ratio$numeric_time <- time_mapping[as.character(timecourse_ratio$time)]
+
+time_order <- c("preshift", "2h", "4h", "6h", "8h")
+
+timecourse_ratio$time <- factor(timecourse_ratio$time, levels = time_order)
+
+mean_ratios <- timecourse_ratio %>%
+  group_by(time, conditions) %>%
+  summarize(
+    mean_ratio = mean(ratio_low_to_high),
+    se = sd(ratio_low_to_high) / sqrt(n())
+  )
+
+colour_map = c(
+  inferno(10)[9], 
+  inferno(10)[2]
+)
+
+ggplot(
+  mean_ratios, 
+  aes(x = time, y = mean_ratio, fill = conditions)
+) +
+  geom_bar(
+    stat = "identity", 
+    position = position_dodge(width = 0.9),  
+    alpha=0.8, width=0.7
+  ) +
+  geom_errorbar(
+    aes(ymin = mean_ratio - se, ymax = mean_ratio + se), 
+    position = position_dodge(width = 0.9), 
+    width = 0.4
+  ) +
+  geom_point(
+    data = timecourse_ratio, 
+    aes(x = time, y = ratio_low_to_high, group = conditions), 
+    position = position_dodge(width = 0.9), 
+    size=1, 
+    alpha=1, 
+    colour="grey"
+  ) +
+  scale_colour_manual(values=colour_map) +
+  scale_fill_manual(values=colour_map) +
+  ylim(NA,1.5) +
+  labs(y = "Ratio Low to High") +
+  theme_bw()+
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1, vjust=0.5),
+    panel.background =  element_blank(),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.title.x= element_blank(),
+    legend.position = "none"
+  )
+
+# ggsave("../figures/fig2c_timecourse_ratio.svg", width = 2.1, height = 2, bg='transparent')
+# 
+# p1 = timecourse_ratio %>% filter(time == "4h" & conditions =="PRO") %>% pull(ratio_low_to_high)
+# p2 = timecourse_ratio %>% filter(time == "4h" & conditions =="GLN") %>% pull(ratio_low_to_high)
+# t.test(p1, p2, paired = FALSE, alternative = "greater")
+
+
+```
