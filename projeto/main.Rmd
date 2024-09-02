@@ -11,15 +11,29 @@ O artigo escolhido tem como título "[Phenotypic heterogeneity follows a growth-
 
 ### Importando Bibliotecas
 
+Bibliotecas são conjuntos de recursos que podem ser reutilizados em diferentes programas para realização de determinadas funções em comum. No presente trabalho, foram utilizadas as seguintes bibliotecas e ferramentas:
+
+-   **BiocManager:** Ferramenta para instalar e gerenciar pacotes do **Bioconductor**, uma coleção de pacotes para análise de dados de genomas e bioinformática no R.
+
+-   **tidyverse:** Um conjunto de bibliotecas no R para manipulação e visualização de dados, que inclui `ggplot2`, `dplyr`, `tidyr`, `readr`, `purrr`, entre outros.
+
+-   **viridis:** Biblioteca quefornece paletas de cores para visualizações de gráficos e mapas.
+
+-   **readxl:** Biblioteca para leitura de arquivos Excel (.xlsx e .xls) no R.
+
+-   **scales:** Biblioteca para controle e personalização de escalas e eixos em gráficos no R.
+
+-   **flexmix:** Biblioteca parapara modelagem de mistura de modelos com diferentes distribuições.
+
+-   **mvtnorm:** Bibliotecapara calcular distribuições e funções relacionadas com a distribuição normal multivariada.
+
 ```{r}
 
 bibliotecas = c(
   "BiocManager", 
   "tidyverse", 
-  "ggplot2",
   "viridis",
   "readxl",
-  "dplyr",
   "scales",
   "flexmix",
   "mvtnorm"
@@ -81,8 +95,6 @@ PRO3.6h <- read.csv(file = './data/source/fig2ab/231012_1840_NLIMPRO.csv')
 GLN3.6h <- read.csv(file = './data/source/fig2ab/231012_1840_NLIMGLN.csv')
 PRO3.8h <- read.csv(file = './data/source/fig2ab/231012_2040_NLIMPRO.csv')
 GLN3.8h <- read.csv(file = './data/source/fig2ab/231012_2040_NLIMGLN.csv')
-
-
 
 # GeneList = readRDS("./data/external/GeneList.rds")
 # names(GeneList) <- gsub("\\.", "_", names(GeneList))
