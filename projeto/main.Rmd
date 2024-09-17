@@ -9,6 +9,14 @@ output: html_document
 
 O artigo escolhido tem como título "[Phenotypic heterogeneity follows a growth-viability tradeoff in response to amino acid identity](https://www.nature.com/articles/s41467-024-50602-8#Sec9)", lê-se em português como "A heterogeneidade fenotípica segue um *trade-off* de capacidade de crescimento em resposta à identidade de aminoácidos". Foi publicado na revista [Nature](https://www.nature.com/) em 02 de Agosto de 2024.
 
+### Introdução
+
+### Metodologia
+
+### Resultados
+
+Considerando o tema abordado no artigo e a disponibilização dos dados, o objetivo deste relatório é replicar as análises realizadas, utilizando métodos de inferência estatística por meio do software R. Pretende-se verificar se é chegar à resultados semelhantes e avaliar se esses resultados são consistentes com a teoria e a prática ensinadas na disciplina.
+
 ## Importando Bibliotecas
 
 Bibliotecas são conjuntos de recursos que podem ser reutilizados em diferentes programas para realização de determinadas funções em comum. No presente trabalho, foram utilizadas as seguintes bibliotecas e ferramentas:
@@ -17,15 +25,13 @@ Bibliotecas são conjuntos de recursos que podem ser reutilizados em diferentes 
 
 -   [**tidyverse**](https://www.tidyverse.org/)**:** Um conjunto de bibliotecas no R para manipulação e visualização de dados, que inclui `ggplot2`, `dplyr`, `tidyr`, `readr`, `purrr`, entre outros.
 
--   [**readxl**](https://cran.r-project.org/web/packages/readxl/index.html)**:** Biblioteca para leitura de arquivos Excel (.xlsx e .xls) no R.
-
 -   [**scales**](https://scales.r-lib.org/)**:** Biblioteca para controle e personalização de escalas e eixos em gráficos no R.
 
 -   [**flexmix**](https://cran.r-project.org/web/packages/flexmix/index.html)**:** Biblioteca parapara modelagem de mistura de modelos com diferentes distribuições.
 
 -   [**mvtnorm**](https://cran.r-project.org/web/packages/mvtnorm/index.html)**:** Bibliotecapara calcular distribuições e funções relacionadas com a distribuição normal multivariada.
 
-```{r}
+```{r, warning = FALSE}
 
 bibliotecas = c(
   "BiocManager", 
@@ -58,9 +64,11 @@ library(gridExtra)
 
 ## Importando dados
 
-Todos os dados gerados ou analisados estão incluídos e disponibilizados no artigo e nas Informações Suplementares. O conteúdo do artigo está sob a licença Creative Commons Atribuição 4.0 Internacional, que permite o uso, compartilhamento, adaptação, distribuição e reprodução, desde que seja dado crédito ao autor original, fornecido um link para a licença e indicadas as alterações feitas.
+Todos os dados gerados ou analisados estão incluídos e disponibilizados no artigo e na seção de Informações Suplementares. O conteúdo do artigo está sob a licença Creative Commons Atribuição 4.0 Internacional, que permite o uso, compartilhamento, adaptação, distribuição e reprodução, desde que seja dado crédito ao autor original.
 
-Dos dados importados, entender-se-á por:
+Dessa forma, foram baixados os arquivos fonte necessários para replicar as imagens que continham análises estatísticas que pudessem ser reproduzidas.
+
+Uma prática comum ao trabalhar com análise de dados é a utilização de siglas para nomear as informações, o que facilita a manipulação e evita a escrita de nomes complexos (longos, com acentuação, etc.), que podem induzir a erros. No contexto deste relatório proveniente do artigo, as siglas utilizadas e seus significados estão listados abaixo:
 
 -   GNL: Glutamina;
 
@@ -116,15 +124,7 @@ GLN.1830 = read.csv(file = './data/source/fig1d/221121_1830_E2_GLN_GFP.csv')
 
 ## Análise Exploratória
 
-Uma análise exploratória é importante para entender os dados que serão utilizados e identificar formas para manipulá-los durante as análises. Abaixo, é apresentado um resumo dos dados importados até o momento, organizados em dataframes. Este resumo inclui o número de observações em cada dataframe e o tipo de dado associado a cada coluna.
-
-*Funções utilizadas:*
-
--   ls(): lista todos os nomes dos objetos que estão salvos no ambiente de trabalho;
-
--   sapply(), lapply(): aplica uma função a cada elemento de uma lista;
-
--   is.data.frame(): verifica se um objeto é do tipo DataFrame.
+Uma análise exploratória é importante para entender os dados que serão utilizados e identificar formas para manipulá-los durante as análises. Abaixo, é apresentado um resumo dos conjuntos de dados importados até o momento, organizados em dataframes. Este resumo inclui o número de observações em cada um e o tipo de dado associado a cada coluna.
 
 ```{r}
 
@@ -160,13 +160,9 @@ resumoObservacoes
 
 ### Mapeamento de dados
 
-*Funções utilizadas:*
+Uma das características do artigo foi a separação das observações com base na exposição das células, no tempo de ação e no padrão de replicação. O padrão de nomenclatura utilizado foi da mesma forma que o artigo original, onde "PRO3.preshift" pode ser interpretado como: "PRO" indicando um meio que contém prolina, "preshift" referindo-se ao tempo ou etapa preshift (pode ser ainda 2 horas, 4 horas, 6 horas ou 8 horas), e "3" como "replicação do tipo 3".
 
--   c(): gera um vetor;
-
--   rep(): cria um vetor de n repetições do elemento informado;
-
--   nrow(): retorna o número de linhas de um DataFrame.
+Os dados referentes aos diferentes meios e horários foram unidos em um único dataframe, com estrutura similar de uma tabela. Para classificar esses dados, foram adicionadas três novas colunas: *condition* (tipo de meio de exposição), *step* (tempo ou etapa de coleta da amostra) e *replicate* (padrão de replicação).
 
 ```{r}
 
@@ -263,9 +259,6 @@ replicacaoPROGLN = c(
   rep('rep3', nrow(GLN3.8h))
 )
 
-```
-
-```{r}
 
 dadosPROGLN = bind_rows(
   PRO.preshift, 
@@ -305,6 +298,8 @@ dadosPROGLN$replicate = replicacaoPROGLN
 head(dadosPROGLN)
 ```
 
+Para as análises iniciais, algumas informações foram reutilizadas, geralmente relacionadas a estatísticas como média, desvio padrão e erro padrão do tamanho, fluorescência das células e seus respectivos coeficientes de variação.
+
 ```{r}
 
 sumarioPROGLN = dadosPROGLN %>%
@@ -326,9 +321,7 @@ sumarioPROGLN = dadosPROGLN %>%
   )
 
 head(sumarioPROGLN)
-```
 
-```{r}
 
 estatisticasPROGLN = sumarioPROGLN %>%
   group_by(step, conditions) %>%
@@ -357,9 +350,27 @@ head(estatisticasPROGLN)
 
 ### Figura 01
 
-Nesta etapa da análise, o objetivo era verificar se a bimodalidade, tanto na distribuição da fluorescência de pRPL28 quanto no tamanho das células, como sugerido pelos dados de scRNA-seq, pode ser detectada em meios limitados de nitrogênio com prolina ou glutamina como fontes de nitrogênio, mas não em meios ricos, como o extrato de levedura-peptonado-dextrose.
+Nesta etapa da análise, o objetivo era examinar a distribuição da densidade de probabilidade da fluorescência de pRPL28 e tamanho das células e verificar se, conforme sugerido pelos dados de scRNA-seq, a bimodalidade pode ser detectada em meios limitados de nitrogênio contendo prolina ou glutamina, mas não em meios ricos, como o extrato de levedura-peptonado-dextrose.
 
 ![](images/41467_2024_50602_Fig1_HTML.webp)
+
+#### **1a (**Distribuição de densidade de probabilidade**)**
+
+Como elencado na Figura 1a, existem três tipos de distribuição de densidade de probabilidade a serem consideradas neste estudo:
+
+1.  Unimodal Heterogênea: apresenta um único pico no gráfico, mas a fluorescência ou tamanho variam entre as células;
+
+2.  Unimodal Homogênea: também há um único pico, mas a fluorescência ou tamanho entre as células são uniformes entre as células, ou seja, a variação é pequena;
+
+3.  Bimodal Heterogênea: exibe dois picos no gráfico, refletindo duas populações de células com características diferentes de fluorescência ou tamanho, com variação não uniforme.
+
+#### 1d (Análise de Bimodalidade)
+
+A Figura 1D analisa a heterogenidade fenotípica de células de levedura expostas a redução de nitrogênio. O tamanho celular foi medido através de uma técnica de dispersão da luz (nomeada FSC-H).
+
+Foram analisadas três condições diferentes: YPD (meio rico em nutrientes), NLIM-PRO (meio com limitação de prolina) e NLIM-GLN (meio com limitação de glutamina).
+
+Os resultados demonstram que as células YPD possuem uma distribuição de tamanhos mais unifome, enquanto NLIM-PRO e NLIM-GLN diversificaram mais de tamanho. A interpretação feita é de que em condições onde os nutrientes são limitados, as células podem adotar estratégias diferentes, como reduzir seu tamanho para reduzir a atividade metabólica e poupar recursos.
 
 ```{r}
 
@@ -372,15 +383,15 @@ condicoesBimodalidade = c(
 bimodalidade = bind_rows(YPD.1840, PRO.1830, GLN.1830)
 bimodalidade$conditions = condicoesBimodalidade
 
-valorMin <- min(c(bimodalidade$BL1.H, bimodalidade$FSC.H), na.rm = TRUE)
-valorMax <- max(c(bimodalidade$BL1.H, bimodalidade$FSC.H), na.rm = TRUE)
+valorMin = min(c(bimodalidade$BL1.H, bimodalidade$FSC.H), na.rm = TRUE)
+valorMax = max(c(bimodalidade$BL1.H, bimodalidade$FSC.H), na.rm = TRUE)
 
 gerarGraficoBimodalidade = function(valorX, legendaX) {
   grafico = ggplot(
     bimodalidade, 
     aes(x = valorX, colour = conditions)
   ) + 
-  geom_density(size = 1) +
+  geom_density(linewidth = 1) +
   scale_x_log10(
     breaks = trans_breaks("log10", function(x) 10 ^ x),
     labels = trans_format("log10", math_format(10 ^ .x)),
@@ -417,11 +428,17 @@ A figura suplementar 6 se trata do Coeficiente de Variação, que é uma medida 
 
 ![](images/clipboard-522279152.png)
 
+Por meio coeficiente de variação (CV) pode-se fazer uma comparação de heterogeneidade entre as duas condições, NLIM-GLN e NLIM-PRO, ao longo das diferentes etapas de tempo. Dos gráficos apresentados, tem-se que a variabilidade no NLIM-PRO é maior do que no NLIM-GLN na maior parte das etapas e para ambos os parâmetros analisados, indicando que as células NLIM-PRO são mais heterogêneas na expressão de pRPL28 e também em seu tamanho.
+
 ```{r}
 
 variabilidadeTamanho = ggplot(
   estatisticasPROGLN, 
-  aes(x = step, y = mean_cv_size, fill = conditions)
+  aes(
+    x = step, 
+    y = mean_cv_size, 
+    fill = conditions
+  )
 ) +
     geom_bar(
       stat = "identity",
@@ -449,18 +466,22 @@ variabilidadeTamanho = ggplot(
     ) +
     ylim(0, 0.7) +
     theme_bw(
-      base_size = 7
+      base_size = 9
     ) +
     labs(
-      colour = "Condições",
-      y = "Coeficiente de Variação (Tamanho)",
+      fill = "Condições",
+      y = "Coef. Variação (Tamanho)",
       x = "Tempo"
     )
 
 
 variabilidadeFlorescencia = ggplot(
   estatisticasPROGLN, 
-  aes(x = step, y = mean_cv_pRPL28, fill = conditions)
+  aes(
+    x = step, 
+    y = mean_cv_pRPL28, 
+    fill = conditions
+  )
 ) +
     geom_bar(
       stat = "identity",
@@ -488,11 +509,11 @@ variabilidadeFlorescencia = ggplot(
     ) +
     ylim(0, 0.7) +
     theme_bw(
-      base_size = 7
+      base_size = 9
     ) +
     labs(
-      colour = "Condições",
-      y = "Coeficiente de Variação (Flourescência)",
+      fill = "Condições",
+      y = "Coef. Variação (Flourescência)",
       x = "Tempo"
     )
 
@@ -504,13 +525,17 @@ grid.arrange(
 )
 ```
 
-Em seguida, foi realizado um teste t não pareado, em que:
+Os dados replicados se mostaram consistentes com os do artigo, manatendo a mesma proporção e valores obtidos.
+
+Além dos gráficos, o estudo aplicou a ferramenta do teste t, que é técnica utilizada para comparar as médias de dois grupos e determinar se há uma diferença significativa entre elas.
+
+Nessa etapa, foi realizado um teste t não pareado, em que:
 
 -   **Hipótese Nula (H₀):** Não há diferença significativa no tamanho médio das células entre os meios limitados de nitrogênio com prolina e glutamina após 8 horas de cultivo.
 
 -   **Hipótese Alternativa (H₁):** Há uma diferença significativa no tamanho médio das células entre os meios limitados de nitrogênio com prolina e glutamina após 8 horas de cultivo.
 
-Entretanto, é importante lembrar que uma das premissas para a aplicação do teste T é a normalidade dos dados. Para verificar se os dados seguem uma distribuição normal, pode-se realizar o teste de Shapiro-Wilk. Neste teste, a hipótese nula (H₀) é de que os dados são provenientes de uma distribuição normal.
+Entretanto, é importante lembrar que uma das premissas para a aplicação do teste T é a normalidade dos dados. Para verificar se os dados seguem uma distribuição normal, pode-se realizar o teste de Shapiro-Wilk. Neste teste, a hipótese nula (H₀) é de que os dados são de uma distribuição normal.
 
 ```{r}
 
@@ -535,13 +560,9 @@ De acordo com os resultados do teste, a hipótese nula foi rejeitada, pois o p-v
 
 ### Figura 2
 
-Nessa etapa da análise, as células foram agrupadas com base em duas características principais: o tamanho da célula e a fluorescência de pRPL28, isso para identificar diferentes subpopulações dentro da amostra de células.
+Nessa etapa da análise, as células foram agrupadas com base em duas características principais: o tamanho da célula e a fluorescência de pRPL28, isso para identificar diferentes subpopulações dentro da amostra de células. Este processo é denominado de *clustering* multivariado, em que há a combinação de múltiplas variáveis para encontrar agrupamentos nos dados. Como o conceito não foi abordado no escopo da disciplina, a função necessária para realizar essa classificação foi extraída do código fonte disponibilizado no artigo.
 
 ![](images/41467_2024_50602_Fig2_HTML.webp)
-
-*Conceitos importantes:*
-
--   *Clustering* multivariado: combinação de múltiplas variáveis para encontrar padrões ou agrupamentos nos dados.
 
 ```{r}
 
@@ -624,9 +645,14 @@ flexmixMVClustering = function(
 }
 ```
 
-Funções Utilizadas:
+Assim como um modelo de regressão simples pode ser usado para expressar a relação linear entre duas variáveis, o Modelo de Mistura Gaussiana é utilizado na análise de clusters em dados multivariados. Nesse modelo, assume-se que os dados são gerados a partir de uma combinação de várias distribuições normais multivariadas. Como esse tópico não foi abordado na disciplina, utilizamos como base o código fonte do artigo, que utiliza a função `FLXMCmvnorm()` para criar um modelo gaussiano/multivariado com o pacote `flexmix`.
 
--   *FLXMCmvnorm()* : cria um modelo gaussiano/multivariado usando o pacote flexmix.
+No modelo multivariado, a divisão entre "Low" e "High" foi realizada com base na classificação das células de acordo com dois parâmetros: **FSC.H** e **BL1.H**. As células foram separadas em dois grupos distintos (representados pelos picos das distribuições na figura 1d):
+
+-   **Low**: Células com valores de **BL1.H** abaixo da reta de separação.
+-   **High**: Células com valores de **BL1.H** acima da reta de separação.
+
+O objetivo é analisar a taxa de células "Low" em relação às células "High" em diferentes pontos de tempo e condições. Além disso, são calculados os intervalos de confiança para essas proporções.
 
 ```{r, warning = FALSE}
 
@@ -743,11 +769,19 @@ ggplot(
   ylim(0, 2) +
   theme_bw(base_size = 8) +
   labs(
-    colour = "Condições",
+    fill = "Condições",
     y = "Razão Low para High",
     x = "Tempo"
   )
 ```
+
+Os dados replicados seguem a mesma proporção, mas apresentam valores pouco diferentes dos mostrados no artigo. Um ponto a ser destacado é que o ponto médio foi calculado diretamente a partir dos dados obtidos, sem arredondamento, ao contrário do artigo, onde os valores parecem ter sido inseridos manualmente no código. Essa diferença pode ter contribuído para as pequenas variações observadas, embora seja apenas uma hipótese, podem ter outros fatores não observados até então.
+
+No teste t aplicado à razão "Low" para "High" entre as condições temos as seguintes hipóteses:
+
+-   **H0 (Hipótese Nula):** Não há diferença significativa entre as razões "Low" para "High" nas condições **PRO** e **GLN** no tempo de 4 horas;
+
+-   **H1 (Hipótese Alternativa):** Existe uma diferença significativa entre as razões "Low" para "High" nas condições **PRO** e **GLN** no tempo de 4 horas.
 
 ```{r}
 
@@ -762,6 +796,4 @@ GLN4H = taxaDivisaoDados %>%
 t.test(PRO4H, GLN4H, paired = FALSE, alternative = "two.sided")
 ```
 
-## Referências
-
-[1]
+Como o p-valor é menor comparado a um nível de significância de 5%, pode-se rejeitar a hipótese nula, logo há evidências para dizer que existe uma diferença significativa entre as razões "Low" para "High" nas condições PRO e GLN no tempo de 4 horas.
