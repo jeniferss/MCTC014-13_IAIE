@@ -11,9 +11,26 @@ O artigo escolhido tem como título "[Phenotypic heterogeneity follows a growth-
 
 ### Introdução
 
+Microrganismos passam a maior parte de sua vida em um estado quiescente, retomando o crescimento ao serem expostos a nutrientes. Quiescência e crescimento são estados celulares opostos, com perfis metabólicos e de expressão gênica distintos. As células quiescentes, menores e com paredes celulares mais espessas, focam em catabolismo para sobreviver ao estresse. A regulação do tamanho celular, taxa de crescimento e sobrevivência em resposta a sinais ambientais, como a falta de nutrientes, é um grande desafio. A heterogeneidade fenotípica dentro de populações geneticamente idênticas, causada por estocasticidade ou variações no ciclo celular, pode trazer vantagens adaptativas, como uma melhor alocação de recursos ou proteção contra investimentos em um único fenótipo. Avanços na fenotipagem de células únicas têm mostrado esse fenômeno, embora os processos subjacentes ainda sejam pouco compreendidos.
+
+O estudo analisa a resposta de células de *Saccharomyces cerevisiae* a condições de crescimento com nitrogênio limitado, revelando subpopulações isogênicas quiescentes e em crescimento, com diferenças em tamanho, longevidade e capacidade de retomar o crescimento. Usando dados de RNA de célula e outros métodos, foi identificado que essas subpopulações apresentam especializações metabólicas baseadas nas fontes de nitrogênio. Foram identificadas duas subpopulações isogênicas com perfis transcriptômicos diferentes, onde o aminoácido prolina provocou uma diferenciação mais acentuada do que a glutamina. Uma subpopulação mostrou menor expressão de genes ribossomais e uma maior resposta ao estresse. A análise da fluorescência de RPL28 revelou que essas subpopulações também diferem no tamanho celular e no comportamento de crescimento. As subpopulações foram reversíveis, regenerando ambas as frações Low e High ao serem reexpostas a condições ricas.
+
+O estudo demonstra que a heterogeneidade observada é fenotípica e não atribuída a diferenças genéticas, além de um comportamento conservado, dependente de aminoácidos, que influencia a dinâmica de populações.
+
 ### Metodologia
 
+Os métodos apresentados no artigo, de uma maneira simplificada, foram:
+
+1.  Sequenciamento de RNA de célula única (scRNAseq) para identificar subpopulações isogênicas;
+2.  Análise de 24 fontes de nitrogênio com níveis limitados ou abundantes;
+3.  Uso de biossensores metabólicos e uma biblioteca de fatores de transcrição marcados com GFP para estudar a resposta metabólica;
+4.  Separação de subpopulações via citometria de fluxo e caracterização de seus perfis de crescimento e viabilidade.
+
 ### Resultados
+
+Este estudo revela que *S. cerevisiae* exposta a uma redução de nitrogênio apresenta bimodalidade fenotípica, com subpopulações que equilibram entre longevidade e crescimento. As subpopulações possuem estados metabólicos diferentes, com uma otimizada para viabilidade e outra para crescimento. A bimodalidade é uma estratégia regulatória importante, e os aminoácidos podem servir como sinais ambientais para decisão celular. A leucina, por exemplo, pode indicar necessidade de dispersão e sobrevivência aumentada. As subpopulações quiescentes têm características que podem prolongar a viabilidade sem *esporulação\** e facilitar a dispersão via troca de metabólitos.
+
+*\* processo pelo qual organismos, como fungos, bactérias e plantas, produzem esporos como forma de reprodução [1].*
 
 Considerando o tema abordado no artigo e a disponibilização dos dados, o objetivo deste relatório é replicar as análises realizadas, utilizando métodos de inferência estatística por meio do software R. Pretende-se verificar se é chegar à resultados semelhantes e avaliar se esses resultados são consistentes com a teoria e a prática ensinadas na disciplina.
 
@@ -39,7 +56,8 @@ bibliotecas = c(
   "scales",
   "flexmix",
   "mvtnorm",
-  "gridExtra"
+  "gridExtra",
+  "Rmixmod"
 )
 
 for (biblioteca in bibliotecas) {
@@ -60,6 +78,7 @@ library(tidyverse)
 library(flexmix)
 library(mvtnorm)
 library(gridExtra)
+library(Rmixmod)
 ```
 
 ## Importando dados
@@ -558,7 +577,7 @@ t.test(PRO8H, GLN8H, paired = FALSE, alternative = "two.sided")
 
 De acordo com os resultados do teste, a hipótese nula foi rejeitada, pois o p-valor obtido foi menor que o nível de significância padrão de 5%. Isso indica que há uma diferença significativa no tamanho médio das células entre os meios limitados de nitrogênio com prolina e glutamina após 8 horas de cultivo.
 
-### Figura 2
+### Figura 02
 
 Nessa etapa da análise, as células foram agrupadas com base em duas características principais: o tamanho da célula e a fluorescência de pRPL28, isso para identificar diferentes subpopulações dentro da amostra de células. Este processo é denominado de *clustering* multivariado, em que há a combinação de múltiplas variáveis para encontrar agrupamentos nos dados. Como o conceito não foi abordado no escopo da disciplina, a função necessária para realizar essa classificação foi extraída do código fonte disponibilizado no artigo.
 
@@ -647,12 +666,12 @@ flexmixMVClustering = function(
 
 Assim como um modelo de regressão simples pode ser usado para expressar a relação linear entre duas variáveis, o Modelo de Mistura Gaussiana é utilizado na análise de clusters em dados multivariados. Nesse modelo, assume-se que os dados são gerados a partir de uma combinação de várias distribuições normais multivariadas. Como esse tópico não foi abordado na disciplina, utilizamos como base o código fonte do artigo, que utiliza a função `FLXMCmvnorm()` para criar um modelo gaussiano/multivariado com o pacote `flexmix`.
 
-No modelo multivariado, a divisão entre "Low" e "High" foi realizada com base na classificação das células de acordo com dois parâmetros: **FSC.H** e **BL1.H**. As células foram separadas em dois grupos distintos (representados pelos picos das distribuições na figura 1d):
+No modelo multivariado, a divisão entre Low e High foi realizada com base na classificação das células de acordo com dois parâmetros: flourescência e tamanho. As células foram separadas em dois grupos distintos (representados pelos picos das distribuições na figura 1d):
 
--   **Low**: Células com valores de **BL1.H** abaixo da reta de separação.
--   **High**: Células com valores de **BL1.H** acima da reta de separação.
+-   **Low**: Células com tamanho abaixo da reta de separação.
+-   **High**: Células com tamanho acima da reta de separação.
 
-O objetivo é analisar a taxa de células "Low" em relação às células "High" em diferentes pontos de tempo e condições. Além disso, são calculados os intervalos de confiança para essas proporções.
+O objetivo é analisar a taxa de células Low em relação às células High em diferentes pontos de tempo e condições. Além disso, são calculados os intervalos de confiança para essas proporções.
 
 ```{r, warning = FALSE}
 
@@ -779,9 +798,9 @@ Os dados replicados seguem a mesma proporção, mas apresentam valores pouco dif
 
 No teste t aplicado à razão "Low" para "High" entre as condições temos as seguintes hipóteses:
 
--   **H0 (Hipótese Nula):** Não há diferença significativa entre as razões "Low" para "High" nas condições **PRO** e **GLN** no tempo de 4 horas;
+-   **Hipótese Nula (H₀):** Não há diferença significativa entre as razões Low para High nas condições PRO e GLN no tempo de 4 horas;
 
--   **H1 (Hipótese Alternativa):** Existe uma diferença significativa entre as razões "Low" para "High" nas condições **PRO** e **GLN** no tempo de 4 horas.
+-   **Hipótese Alternativa (H₁):** Existe uma diferença significativa entre as razões Low para High nas condições PRO e GLN no tempo de 4 horas.
 
 ```{r}
 
@@ -797,3 +816,268 @@ t.test(PRO4H, GLN4H, paired = FALSE, alternative = "two.sided")
 ```
 
 Como o p-valor é menor comparado a um nível de significância de 5%, pode-se rejeitar a hipótese nula, logo há evidências para dizer que existe uma diferença significativa entre as razões "Low" para "High" nas condições PRO e GLN no tempo de 4 horas.
+
+### Figura 03
+
+A figura mostra a fração de células sem brotos em diferentes subpopulações de levedura, em condições diferentes: com limitação de glutamina (NLIM_GLN) e prolina (NLIM-PRO). As subpopulações são: "unsorted" (não classificadas), "low" (com baixa expressão fenotípica) e "high" (com alta expressão fenotípica).
+
+![](images/41467_2024_50602_Fig3_HTML.webp){style="width: 40%"}
+
+```{r}
+
+
+```
+
+### Figura 04
+
+Nessa etapa, foi análisada como uma mudança para outras fontes de nitrogênio poderia afetar a heterogeneidade na quiescência.
+
+![](images/41467_2024_50602_Fig4_HTML.webp)
+
+#### 4a
+
+```{r}
+
+pontuacoes = read.csv(
+  './data/source/helpers/bimodality_scores_HO_HLM_6h_triplicates_summary.csv'
+)
+
+pontuacoes = pontuacoes %>% 
+  dplyr::rowwise() %>% 
+  dplyr::mutate(
+    rep.stat.mean = mean(c_across(c('rep1.stat', 'rep2.stat', 'rep3.stat'))),
+    rep.stat.sd = sd(c_across(c('rep1.stat', 'rep2.stat', 'rep3.stat'))),
+    rep.stat.stderror =  rep.stat.sd/sqrt(3),
+     
+    rep.FC.mean = mean(c_across(c('rep1.FC', 'rep2.FC','rep3.FC'))),
+    rep.FC.sd = sd(c_across(c('rep1.FC', 'rep2.FC', 'rep3.FC'))),
+    rep.FC.mean.inv = - rep.FC.mean, 
+    rep.FC.stderror = rep.FC.sd/sqrt(3),
+    
+    control = if_else(condition == 'NSTARVE', 'y', 'n'),
+    
+    nitrogen = if_else(
+      control=='n', stringr::str_to_sentence(sub('.....', '',condition)),
+      'None'
+      )
+  )
+
+scores.NLIM = pontuacoes %>% filter(!grepl('NREP', condition))
+scores.NREP = pontuacoes %>% filter(!grepl('NLIM', condition))
+
+ggplot(
+  scores.NLIM, 
+  aes(
+    x = nitrogen, 
+    y = rep.stat.mean,
+    fill = control
+  )
+) +
+  geom_bar(
+    aes(
+      x = nitrogen, 
+      y = rep.stat.mean,  
+      fill = control, 
+      colour = control
+    ), 
+    stat="identity", 
+    width=0.7
+  )+
+  geom_point(aes(x = nitrogen, y = rep1.stat), size = 0.8, colour="grey") +
+  geom_point(aes(x = nitrogen, y = rep2.stat), size = 0.8, colour="grey") +
+  geom_point(aes(x = nitrogen, y = rep3.stat), size = 0.8, colour="grey") +
+  ylim(0, 0.05) +
+  geom_errorbar(
+    aes(
+      ymin = rep.stat.mean - rep.stat.stderror, 
+      ymax = rep.stat.mean + rep.stat.stderror
+    ), 
+    width=.3, 
+    color='black'
+  ) + 
+  theme_bw(base_size = 10) +
+  theme(
+    axis.text.x = element_text(
+      angle = 90
+    ),
+  ) + labs(
+    y = "Pontuação Bimodalidade (a.u.)",
+    fill = "Controle",
+    x = ""
+  )
+```
+
+#### 4b
+
+### Figura 06
+
+Nesta etapa, foi estudada como as diferenças entre populações High e Low poderiam se traduzir em variações fisiológicas. Usando sensores metabólicos, foram medidos dois parâmetros: o estado energético e a atividade metabólica da célula.
+
+```{r}
+
+performClusteringRmixmod = function(dados, modelo) {
+  
+  listaModelos = mixmodGaussianModel(listModels = modelo)
+  clustersMixmod = mixmodCluster(dados, nbCluster = 2, model = listaModelos)
+
+  agrupamento = clustersMixmod["bestResult"]["partition"]
+  dadosAgrupados = cbind(dados, agrupamento)
+  mediaAgrupada = tapply(dadosAgrupados$FSC.H, dadosAgrupados$agrupamento, mean)
+  
+  dadosAgrupados = dadosAgrupados %>% mutate(
+    class = if_else(
+      agrupamento == which.min(mediaAgrupada)[[1]], "Low", "High"
+    )
+  )
+}
+
+truncarAbaixo = function(dataframe, tempoTruncado) {
+  dataframe = dataframe %>% filter(Time > tempoTruncado)
+}
+```
+
+```{r}
+
+data.2h = read.csv(file = "./data/source/fig6cde/1530_C1_yATP_NLIMPRO.csv") 
+data.4h = read.csv(file = "./data/source/fig6cde/1730_E1_yATP_NLIMPRO.csv") 
+data.6h = read.csv(file = "./data/source/fig6cde/1930_G1_yATP_NLIMPRO.csv") 
+data.8h = read.csv(file = "./data/source/fig6cde/2130_A1_yATP_NLIMPRO.csv") 
+
+data.2h$yATP.H = data.2h$VL2.H/data.2h$VL1.H
+data.4h$yATP.H = data.4h$VL2.H/data.4h$VL1.H
+data.6h$yATP.H = data.6h$VL2.H/data.6h$VL1.H
+data.8h$yATP.H = data.8h$VL2.H/data.8h$VL1.H
+
+data.2h = data.2h %>% dplyr::select(FSC.H, yATP.H)
+data.4h = data.4h %>% dplyr::select(FSC.H, yATP.H)
+data.6h = data.6h %>% dplyr::select(FSC.H, yATP.H)
+data.8h = data.8h %>% dplyr::select(FSC.H, yATP.H)
+
+dadosClusterizados.2h = performClusteringRmixmod(data.2h, "Gaussian_pk_L_I")
+dadosClusterizados.4h = performClusteringRmixmod(data.4h, "Gaussian_pk_L_I")
+dadosClusterizados.6h = performClusteringRmixmod(data.6h, "Gaussian_pk_L_I")
+dadosClusterizados.8h = performClusteringRmixmod(data.8h, "Gaussian_pk_L_I")
+
+pontosNoTempo = c(
+  rep("2h", nrow(dadosClusterizados.2h)),
+  rep("4h", nrow(dadosClusterizados.4h)),
+  rep("6h", nrow(dadosClusterizados.6h)),
+  rep("8h", nrow(dadosClusterizados.8h))
+)
+
+dados = bind_rows(
+  dadosClusterizados.2h,
+  dadosClusterizados.4h,
+  dadosClusterizados.6h,
+  dadosClusterizados.8h
+)
+
+dados$pontosNoTempo = pontosNoTempo
+
+dadosPlot = dados %>% filter(!pontosNoTempo == "2h")
+
+sensorATP = ggplot(
+  dadosPlot,
+  aes(
+    y = yATP.H, 
+    x = pontosNoTempo,
+    color = factor(class), 
+    fill = factor(class)
+    )
+) + 
+  geom_boxplot(
+    aes(
+      y = yATP.H, 
+      x = pontosNoTempo,
+      color = factor(class)
+    ),
+    colour = "black",
+    outlier.colour = NA, 
+    position = position_dodge(width=0.9)
+  ) +
+  labs(
+    y = "Saída do sensor ATP (VL2-H/VL1-H)",
+    x = "Tempo",
+    fill = "Fatores"
+  ) +
+  ylim(0,6) +
+  theme_bw(base_size = 8)
+```
+
+```{r}
+
+dados4h = read.csv(file = "./data/source/fig6cde/1650_A9_FBPs1_NLIMPRO.csv") %>% truncarAbaixo(10)
+
+dados6h = read.csv(file = "./data/source/fig6cde/1850_C9_FBPs1_NLIMPRO.csv") %>% truncarAbaixo(13)
+
+dados8h = read.csv(file = "./data/source/fig6cde/2050_G9_FBPs1_NLIMPRO.csv") %>% truncarAbaixo(13)
+
+dados4h$FBPs1.H = dados4h$YL2.H / dados4h$BL1.H
+dados6h$FBPs1.H = dados6h$YL2.H / dados6h$BL1.H
+dados8h$FBPs1.H = dados8h$YL2.H / dados8h$BL1.H
+
+dados4h = dados4h %>% 
+  dplyr::select(FSC.H, FBPs1.H) %>% 
+  filter(FBPs1.H < 20, FBPs1.H > 4)
+
+dados6h = dados6h %>% 
+  dplyr::select(FSC.H, FBPs1.H) %>% 
+  filter(FBPs1.H < 20, FBPs1.H > 4)
+
+dados8h = dados8h %>% 
+  dplyr::select(FSC.H, FBPs1.H) %>% 
+  filter(FBPs1.H < 20, FBPs1.H > 4)
+
+dadosAgrupados4h = performClusteringRmixmod(dados4h, "Gaussian_pk_L_I")
+dadosAgrupados6h = performClusteringRmixmod(dados6h, "Gaussian_pk_L_I")
+dadosAgrupados8h = performClusteringRmixmod(dados8h, "Gaussian_pk_L_I")
+
+pontosNoTempo = c(
+  rep("4h", nrow(dadosAgrupados4h)),
+  rep("6h", nrow(dadosAgrupados6h)),
+  rep("8h", nrow(dadosAgrupados8h))
+)
+
+dados = bind_rows(dadosAgrupados4h, dadosAgrupados6h, dadosAgrupados8h)
+
+dados$pontosNoTempo = pontosNoTempo
+
+sensorFPB = ggplot(
+  dados,
+  aes( 
+    y = FBPs1.H, 
+    x = pontosNoTempo,
+    color = factor(class), 
+    fill = factor(class)
+  )
+) + 
+  geom_boxplot(
+    aes(
+      y = FBPs1.H, 
+      x = pontosNoTempo, 
+      color = colFct
+    ),
+    colour = "black",
+    outlier.colour = NA, 
+    position = position_dodge(width = 0.9)
+  ) +
+  ylim(4, 17) +
+  theme_bw(base_size = 8) +
+  labs(
+    fill = "Fatores",
+    y = "Saída do sensor FBP (BL1-H/YL2-H)",
+    x = "Tempo"
+  )
+
+```
+
+```{r}
+
+grid.arrange(sensorFPB, sensorATP, ncol = 2, heights = c(0.8, 0.8))
+```
+
+De acordo com a análise dos boxplots, apesar dos níveis de ATP serem unimodais a nível populacional, a relação entre os níveis de ATP e o tamanho celular é bimodal para a prolina, revelando duas subpopulações distintas. Por outro lado, os níveis de FBP não mostraram diferenças entre as subpopulações, mas sim uma diminuição geral ao longo do tempo.
+
+## Referências
+
+[1] **Esporo**. Disponível em: <https://pt.wikipedia.org/wiki/Esporo>.
