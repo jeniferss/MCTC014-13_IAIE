@@ -17,8 +17,6 @@ Bibliotecas são conjuntos de recursos que podem ser reutilizados em diferentes 
 
 -   [**tidyverse**](https://www.tidyverse.org/)**:** Um conjunto de bibliotecas no R para manipulação e visualização de dados, que inclui `ggplot2`, `dplyr`, `tidyr`, `readr`, `purrr`, entre outros.
 
--   [**viridis**](https://cran.r-project.org/web/packages/viridis/vignettes/intro-to-viridis.html)**:** Biblioteca quefornece paletas de cores para visualizações de gráficos e mapas.
-
 -   [**readxl**](https://cran.r-project.org/web/packages/readxl/index.html)**:** Biblioteca para leitura de arquivos Excel (.xlsx e .xls) no R.
 
 -   [**scales**](https://scales.r-lib.org/)**:** Biblioteca para controle e personalização de escalas e eixos em gráficos no R.
@@ -29,18 +27,15 @@ Bibliotecas são conjuntos de recursos que podem ser reutilizados em diferentes 
 
 ```{r}
 
-# Lista as bibliotecas que serão utilizadas
 bibliotecas = c(
   "BiocManager", 
   "tidyverse", 
-  "viridis",
-  "readxl",
   "scales",
   "flexmix",
-  "mvtnorm"
+  "mvtnorm",
+  "gridExtra"
 )
 
-# Verifica se cada biblioteca já está instalada, caso não, faz o download
 for (biblioteca in bibliotecas) {
   if (!biblioteca %in% installed.packages()) {
     if (biblioteca == "BiocManager") {
@@ -52,16 +47,13 @@ for (biblioteca in bibliotecas) {
   }
 }
 
-# Importa as bibliotecas que serão utilizadas para o ambiente de execução
 library(ggplot2)
-library(viridis)
-library(readxl)
 library(dplyr)
 library(scales)
 library(tidyverse)
 library(flexmix)
 library(mvtnorm)
-
+library(gridExtra)
 ```
 
 ## Importando dados
@@ -70,9 +62,15 @@ Todos os dados gerados ou analisados estão incluídos e disponibilizados no art
 
 Dos dados importados, entender-se-á por:
 
--   GNL: Glutamina
+-   GNL: Glutamina;
 
--   PRO: Prolina
+-   PRO: Prolina;
+
+-   YPD: Extrato de levedura-peptonado-dextrose;
+
+-   NLIM-PRO: Meios limitados de nitrogênio com Prolina;
+
+-   NLIM-GLN: Meios limitados de nitrogênio com Glutamina.
 
 ```{r}
 
@@ -111,17 +109,14 @@ GLN3.6h = read.csv(file = './data/source/fig2ab/231012_1840_NLIMGLN.csv')
 PRO3.8h = read.csv(file = './data/source/fig2ab/231012_2040_NLIMPRO.csv')
 GLN3.8h = read.csv(file = './data/source/fig2ab/231012_2040_NLIMGLN.csv')
 
-# GeneList = readRDS("./data/external/GeneList.rds")
-# names(GeneList) = gsub("\\.", "_", names(GeneList))
-# head(GeneList)
-# 
-# Jackson2020 = readRDS("./data/external/Jackson2020.rds")
-# head(Jackson2020)
-# 
-# load("./data/external/Airoldi2009.RData")
+YPD.1840 = read.csv(file = './data/source/fig1d/220707_1840_YPD.csv')
+PRO.1830 = read.csv(file = './data/source/fig1d/221121_1830_E1_PRO_GFP.csv')
+GLN.1830 = read.csv(file = './data/source/fig1d/221121_1830_E2_GLN_GFP.csv')
 ```
 
 ## Análise Exploratória
+
+Uma análise exploratória é importante para entender os dados que serão utilizados e identificar formas para manipulá-los durante as análises. Abaixo, é apresentado um resumo dos dados importados até o momento, organizados em dataframes. Este resumo inclui o número de observações em cada dataframe e o tipo de dado associado a cada coluna.
 
 *Funções utilizadas:*
 
@@ -129,11 +124,7 @@ GLN3.8h = read.csv(file = './data/source/fig2ab/231012_2040_NLIMGLN.csv')
 
 -   sapply(), lapply(): aplica uma função a cada elemento de uma lista;
 
--   is.data.frame(): verifica se um objeto é do tipo DataFrame;
-
--   get(): busca um objeto pelo nome que foi importado no ambiente de trabalho;
-
--   identical(): verifica se dois objetos são iguais.
+-   is.data.frame(): verifica se um objeto é do tipo DataFrame.
 
 ```{r}
 
@@ -145,21 +136,6 @@ dataframesImportados = sapply(
 )
 
 dataframesNomes = nomesImportados[dataframesImportados]
-dataframes = lapply(dataframesNomes, get)
-
-cabecalhos = lapply(dataframes, names)
-cabecalhosSaoIguais = all(
-  sapply(
-    cabecalhos, 
-    function(x) identical(x, cabecalhos[[1]])
-  )
-)
-
-if (cabecalhosSaoIguais) {
-  print("Todos os dataframes têm os mesmos headers.")
-} else {
-  print("Os dataframes não têm os mesmos headers.")
-}
 
 tiposDeDados = data.frame(
   cabeçalhos = names(PRO.2h), 
@@ -174,17 +150,15 @@ numeroObservacoes = function(dataframeName) {
   return(nrow(dataframe))
 }
 
-resumoObservacoes <- data.frame(
+resumoObservacoes = data.frame(
   nome = dataframesNomes,
   observacoes = sapply(dataframesNomes, numeroObservacoes)
 )
 
 resumoObservacoes
-
-head(PRO.2h)
 ```
 
-#### Figura 2c
+### Mapeamento de dados
 
 *Funções utilizadas:*
 
@@ -196,8 +170,7 @@ head(PRO.2h)
 
 ```{r}
 
-# Mapeamento de condições
-conditions = c(
+condicoesPROGLN = c(
   rep('PRO', nrow(PRO.preshift)),
   rep('GLN', nrow(GLN.preshift)),
   rep('PRO', nrow(PRO.2h)),
@@ -228,8 +201,7 @@ conditions = c(
   rep('GLN', nrow(GLN3.8h))
 )
 
-# Mapemaneto de tempo de ação
-time = c(
+etapaPROGLN = c(
   rep('preshift', nrow(PRO.preshift)),
   rep('preshift', nrow(GLN.preshift)),
   rep('2h', nrow(PRO.2h)),
@@ -260,8 +232,7 @@ time = c(
   rep('8h', nrow(GLN3.8h))
 )
 
-# Mapeamento de replicação
-replicate = c(
+replicacaoPROGLN = c(
   rep('rep1', nrow(PRO.preshift)),
   rep('rep1', nrow(GLN.preshift)),
   rep('rep1', nrow(PRO.2h)),
@@ -292,77 +263,11 @@ replicate = c(
   rep('rep3', nrow(GLN3.8h))
 )
 
-flexmix_MV_clustering = function(
-    data, 
-    p_tresh=0.95, 
-    dimensions=c("FSC.H","BL1.H"),
-    k=2,
-    cluster=NULL
-){
-  # Perform multivariate clustering
-  # data : dataframe with flow data
-  # p_tresh : value for the treshold to assign cells to cluster (default : 0.95)
-  # dimensions : dimensions to perform clustering on (default : c("FSC.H","BL1.H"))
-  
-  mo1 = FLXMCmvnorm()
-  mo2 = FLXMCmvnorm()
-  
-  data_mv_fit = data %>% 
-    dplyr::select(all_of(dimensions))
-  
-  set.seed(123)
-  
-  if (is.null(cluster)) {
-    flexfit = flexmix(
-      as.matrix(data_mv_fit) ~ 1, 
-      data = data_mv_fit, 
-      k = k, 
-      model = list(mo1,mo2)
-    )
-  } else {
-    flexfit = flexmix(
-      as.matrix(data_mv_fit) ~ 1, 
-      data = data_mv_fit, 
-      k = k, 
-      model = list(mo1,mo2), 
-      cluster=cluster
-    )
-  }
-  
-  proba = posterior(flexfit)
-  clustered_data = cbind(data,proba)
-  
-  c1 = parameters(flexfit, component=1)[[1]]
-  c2 = parameters(flexfit, component=2)[[1]]
-  
-  cluster_means = c(
-    parameters(flexfit, component=1)[[1]][1],
-    parameters(flexfit, component=2)[[1]][1]
-  )
-  
-  if (which.min(cluster_means) == 1) {
-    clustered_data = dplyr::rename(clustered_data, "proba_low" = "1")
-    clustered_data = dplyr::rename(clustered_data, "proba_high" = "2")
-  } else {
-    clustered_data = dplyr::rename(clustered_data, "proba_low" = "2")
-    clustered_data = dplyr::rename(clustered_data, "proba_high" = "1")
-  }
-  
-  clustered_data = clustered_data %>% 
-    mutate(
-      classification = if_else(
-        proba_low > p_tresh, 
-        "Low", 
-        if_else(
-          proba_high > p_tresh , "High", "Unknown"
-        )
-      )
-    )
-  
-  clustered_data
-}
+```
 
-data = bind_rows(
+```{r}
+
+dadosPROGLN = bind_rows(
   PRO.preshift, 
   GLN.preshift, 
   PRO.2h, 
@@ -393,140 +298,468 @@ data = bind_rows(
   GLN3.8h
 )
 
-data$conditions = conditions
-data$time = time
-data$replicate = replicate
+dadosPROGLN$conditions = condicoesPROGLN
+dadosPROGLN$step = etapaPROGLN
+dadosPROGLN$replicate = replicacaoPROGLN
 
-bulk_summary = data %>% 
+head(dadosPROGLN)
+```
+
+```{r}
+
+sumarioPROGLN = dadosPROGLN %>%
   group_by(
     conditions,
-    time,
+    step,
     replicate
-  ) %>% 
+  ) %>%
   summarize(
     mean_pRPL28 = mean(BL1.H),
     sd_pRPL28 = sd(BL1.H),
-    CV_pRPL28 = sd_pRPL28/mean_pRPL28,
+    cv_pRPL28 = sd_pRPL28/mean_pRPL28,
+    
     mean_size = mean(FSC.H),
     sd_size = sd(FSC.H),
-    CV_size = sd_size/mean_size
+    cv_size = sd_size/mean_size,
+    
+    .groups = "keep"
   )
 
-clustered_data = flexmix_MV_clustering(
-  data %>%
-    filter(time=="4h" & conditions=="PRO" & replicate=="rep1")
+head(sumarioPROGLN)
+```
+
+```{r}
+
+estatisticasPROGLN = sumarioPROGLN %>%
+  group_by(step, conditions) %>%
+  summarize(
+    mean_mean_pRPL28 = mean(mean_pRPL28),
+    mean_sd_pRPL28 = mean(sd_pRPL28),
+    mean_cv_pRPL28 = mean(cv_pRPL28),
+    
+    se_mean_pRPL28 = sd(mean_pRPL28)/ sqrt(n()),
+    se_sd_pRPL28 = sd(sd_pRPL28)/ sqrt(n()),
+    se_cv_pRPL28 = sd(cv_pRPL28)/ sqrt(n()),
+    
+    mean_mean_size = mean(mean_size),
+    mean_sd_size = mean(sd_size),
+    mean_cv_size = mean(cv_size),
+    
+    se_mean_size = sd(mean_size)/ sqrt(n()),
+    se_sd_size = sd(sd_size)/ sqrt(n()),
+    se_cv_size = sd(cv_size)/ sqrt(n()),
+    
+    .groups = "keep"
+  )
+
+head(estatisticasPROGLN)
+```
+
+### Figura 01
+
+Nesta etapa da análise, o objetivo era verificar se a bimodalidade, tanto na distribuição da fluorescência de pRPL28 quanto no tamanho das células, como sugerido pelos dados de scRNA-seq, pode ser detectada em meios limitados de nitrogênio com prolina ou glutamina como fontes de nitrogênio, mas não em meios ricos, como o extrato de levedura-peptonado-dextrose.
+
+![](images/41467_2024_50602_Fig1_HTML.webp)
+
+```{r}
+
+condicoesBimodalidade = c(
+  rep('YPD', nrow(YPD.1840)),
+  rep('NLIM-PRO', nrow(PRO.1830)),
+  rep('NLIM-GLN', nrow(GLN.1830))
 )
 
-mo1 = FLXMCmvnorm()
-mo2 = FLXMCmvnorm()
+bimodalidade = bind_rows(YPD.1840, PRO.1830, GLN.1830)
+bimodalidade$conditions = condicoesBimodalidade
 
-data_mv_fit = data %>%
-  filter(time == "4h" & conditions == "PRO" & replicate == "rep1") %>% 
-  dplyr::select(all_of(c("FSC.H","BL1.H")))
+valorMin <- min(c(bimodalidade$BL1.H, bimodalidade$FSC.H), na.rm = TRUE)
+valorMax <- max(c(bimodalidade$BL1.H, bimodalidade$FSC.H), na.rm = TRUE)
+
+gerarGraficoBimodalidade = function(valorX, legendaX) {
+  grafico = ggplot(
+    bimodalidade, 
+    aes(x = valorX, colour = conditions)
+  ) + 
+  geom_density(size = 1) +
+  scale_x_log10(
+    breaks = trans_breaks("log10", function(x) 10 ^ x),
+    labels = trans_format("log10", math_format(10 ^ .x)),
+    limits = c(valorMin, valorMax)
+  ) +
+  theme_bw(
+    base_size = 10
+  ) +
+  labs(
+    colour = "Condições",
+    x = legendaX,
+    y = "Densidade (a.u.)"
+  )
+  
+  return(grafico)
+}
+
+fluorescencia = gerarGraficoBimodalidade(
+  valorX = bimodalidade$BL1.H, 
+  legendaX = "pRPL28 fluorescência (BL1-H)"
+)
+
+tamanhoCelula = gerarGraficoBimodalidade(
+  valorX = bimodalidade$FSC.H, 
+  legendaX = "Tamanho da célula (FSC-H)"
+)
+
+grid.arrange(fluorescencia, tamanhoCelula, ncol = 1)
+```
+
+### Figura Suplementar 6
+
+A figura suplementar 6 se trata do Coeficiente de Variação, que é uma medida para expressar a variabilidade de uma variável em relação à sua média.
+
+![](images/clipboard-522279152.png)
+
+```{r}
+
+variabilidadeTamanho = ggplot(
+  estatisticasPROGLN, 
+  aes(x = step, y = mean_cv_size, fill = conditions)
+) +
+    geom_bar(
+      stat = "identity",
+      position = position_dodge(width = 0.9),
+      width = 0.7
+    ) +
+    geom_point(
+      data = sumarioPROGLN, 
+      aes(
+        x = step, 
+        y = cv_size, 
+        group = conditions
+      ), 
+      position = position_dodge(width = 0.9),
+      size = 0.8,
+      color = "gray"
+    ) +
+    geom_errorbar(
+      aes(
+        ymin = mean_cv_size - se_cv_size,
+        ymax = mean_cv_size + se_cv_size
+      ),
+      position = position_dodge(width = 0.9),
+      width = 0.4
+    ) +
+    ylim(0, 0.7) +
+    theme_bw(
+      base_size = 7
+    ) +
+    labs(
+      colour = "Condições",
+      y = "Coeficiente de Variação (Tamanho)",
+      x = "Tempo"
+    )
+
+
+variabilidadeFlorescencia = ggplot(
+  estatisticasPROGLN, 
+  aes(x = step, y = mean_cv_pRPL28, fill = conditions)
+) +
+    geom_bar(
+      stat = "identity",
+      position = position_dodge(width = 0.9),
+      width = 0.7
+    ) +
+    geom_point(
+      data = sumarioPROGLN, 
+      aes(
+        x = step, 
+        y = cv_pRPL28, 
+        group = conditions
+      ), 
+      position = position_dodge(width = 0.9), 
+      size = 0.8,
+      color = "gray"
+    ) +
+    geom_errorbar(
+      aes(
+        ymin = mean_cv_pRPL28 - se_cv_pRPL28,
+        ymax = mean_cv_pRPL28 + se_cv_pRPL28
+      ),
+      position = position_dodge(width = 0.9),
+      width = 0.4
+    ) +
+    ylim(0, 0.7) +
+    theme_bw(
+      base_size = 7
+    ) +
+    labs(
+      colour = "Condições",
+      y = "Coeficiente de Variação (Flourescência)",
+      x = "Tempo"
+    )
+
+
+grid.arrange(
+  variabilidadeFlorescencia, 
+  variabilidadeTamanho, 
+  ncol = 1
+)
+```
+
+Em seguida, foi realizado um teste t não pareado, em que:
+
+-   **Hipótese Nula (H₀):** Não há diferença significativa no tamanho médio das células entre os meios limitados de nitrogênio com prolina e glutamina após 8 horas de cultivo.
+
+-   **Hipótese Alternativa (H₁):** Há uma diferença significativa no tamanho médio das células entre os meios limitados de nitrogênio com prolina e glutamina após 8 horas de cultivo.
+
+Entretanto, é importante lembrar que uma das premissas para a aplicação do teste T é a normalidade dos dados. Para verificar se os dados seguem uma distribuição normal, pode-se realizar o teste de Shapiro-Wilk. Neste teste, a hipótese nula (H₀) é de que os dados são provenientes de uma distribuição normal.
+
+```{r}
+
+PRO8H = sumarioPROGLN %>%
+  filter(step == "8h" & conditions =="PRO") %>% pull(cv_size)
+
+GLN8H = sumarioPROGLN %>%
+  filter(step == "8h" & conditions =="GLN") %>% pull(cv_size)
+
+shapiro.test(PRO8H)
+shapiro.test(GLN8H)
+```
+
+Como o p-valor obtido foi maior que o nível de significância padrão de 5%, não há evidências suficientes para rejeitar a hipótese nula, sugerindo que os dados podem ser considerados como de uma distribuição normal, e pode-se aplicar o teste T.
+
+```{r}
+
+t.test(PRO8H, GLN8H, paired = FALSE, alternative = "two.sided")
+```
+
+De acordo com os resultados do teste, a hipótese nula foi rejeitada, pois o p-valor obtido foi menor que o nível de significância padrão de 5%. Isso indica que há uma diferença significativa no tamanho médio das células entre os meios limitados de nitrogênio com prolina e glutamina após 8 horas de cultivo.
+
+### Figura 2
+
+Nessa etapa da análise, as células foram agrupadas com base em duas características principais: o tamanho da célula e a fluorescência de pRPL28, isso para identificar diferentes subpopulações dentro da amostra de células.
+
+![](images/41467_2024_50602_Fig2_HTML.webp)
+
+*Conceitos importantes:*
+
+-   *Clustering* multivariado: combinação de múltiplas variáveis para encontrar padrões ou agrupamentos nos dados.
+
+```{r}
+
+flexmixMVClustering = function(
+    dados, 
+    limiarProbabilidade=0.95, 
+    dimensoes=c("FSC.H", "BL1.H"),
+    numeroClusters=2,
+    clusterInicial=NULL
+){
+  # Realiza o clustering multivariado
+  # dados : data frame com dados de fluxo
+  # limiarProbabilidade : valor para o limiar para atribuir células ao cluster 
+  # dimensoes : dimensões para realizar o clustering 
+  
+  modelo1 = FLXMCmvnorm()
+  modelo2 = FLXMCmvnorm()
+  
+  dadosMVFit = dados %>% 
+    dplyr::select(all_of(dimensoes))
+  
+  set.seed(123)
+  
+  if (is.null(clusterInicial)) {
+    ajusteFlex = flexmix(
+      as.matrix(dadosMVFit) ~ 1, 
+      data = dadosMVFit, 
+      k = numeroClusters, 
+      model = list(modelo1, modelo2)
+    )
+  } else {
+    ajusteFlex = flexmix(
+      as.matrix(dadosMVFit) ~ 1, 
+      data = dadosMVFit, 
+      k = numeroClusters, 
+      model = list(modelo1, modelo2), 
+      cluster = clusterInicial
+    )
+  }
+  
+  probabilidades = posterior(ajusteFlex)
+  dadosClusterizados = cbind(dados, probabilidades)
+  
+  parametrosCluster1 = parameters(ajusteFlex, component=1)[[1]]
+  parametrosCluster2 = parameters(ajusteFlex, component=2)[[1]]
+  
+  mediasClusters = c(
+    parameters(ajusteFlex, component=1)[[1]][1],
+    parameters(ajusteFlex, component=2)[[1]][1]
+  )
+  
+  if (which.min(mediasClusters) == 1) {
+    dadosClusterizados = dplyr::rename(
+      dadosClusterizados, "lowProb" = "1"
+    )
+    dadosClusterizados = dplyr::rename(
+      dadosClusterizados, "highProb" = "2"
+    )
+  } else {
+    dadosClusterizados = dplyr::rename(
+      dadosClusterizados, "lowProb" = "2"
+    )
+    dadosClusterizados = dplyr::rename(
+      dadosClusterizados, "highProb" = "1"
+    )
+  }
+  
+  dadosClusterizados = dadosClusterizados %>% 
+    mutate(
+      class = if_else(
+        lowProb > limiarProbabilidade, 
+        "Low", 
+        if_else(
+          highProb > limiarProbabilidade , "High", "Unknown"
+        )
+      )
+    )
+  
+  dadosClusterizados
+}
+```
+
+Funções Utilizadas:
+
+-   *FLXMCmvnorm()* : cria um modelo gaussiano/multivariado usando o pacote flexmix.
+
+```{r, warning = FALSE}
+
+modelo1 = FLXMCmvnorm()
+modelo2 = FLXMCmvnorm()
+
+dadosMultivariados = dadosPROGLN %>%
+  filter(step == "4h" & conditions == "PRO" & replicate == "rep1") %>%
+  dplyr::select(all_of(c("FSC.H", "BL1.H")))
 
 set.seed(123)
 
-flexfit = flexmix(
-  as.matrix(data_mv_fit) ~ 1, 
-  data = data_mv_fit, 
-  k = 2, 
-  model = list(mo1,mo2)
+ajusteModelo = flexmix(
+  as.matrix(dadosMultivariados) ~ 1,
+  data = dadosMultivariados,
+  k = 2,
+  model = list(modelo1, modelo2)
 )
 
-c1 = parameters(flexfit, component=1)[[1]]
-c2 = parameters(flexfit, component=2)[[1]]
+paramsModelo1 = parameters(ajusteModelo, component=1)[[1]]
+paramsModelo2 = parameters(ajusteModelo, component=2)[[1]]
 
-c_low = c(c1[1],c1[2])
-c_high = c(c2[1],c2[2])
+modelo1Limites = c(paramsModelo1[1], paramsModelo1[2])
+Modelo2Limites = c(paramsModelo2[1], paramsModelo2[2])
+ 
+coeficienteVariacao = (
+  Modelo2Limites[2] - modelo1Limites[2]
+  )/(
+    Modelo2Limites[1] - Modelo2Limites[1]
+  )
 
-slope = (c_high[2]-c_low[2])/(c_high[1]-c_low[1])
+dadosClusterizadosPROGLN = flexmixMVClustering(
+  dadosPROGLN %>%
+    filter(step=="4h" & conditions=="PRO" & replicate=="rep1")
+)
 
-summary(clustered_data %>% filter(classification == "Unknown"))
-mid_point = c(72621, 33895)
+mediasdadoSemClassificacao = dadosClusterizadosPROGLN %>%
+  filter(class == "Unknown") %>%
+  summarise(across(c(FSC.H, BL1.H), mean))
 
-inverse_slope = -1/slope
-y_intercept = mid_point[2] - inverse_slope * mid_point[1]
+pontoMedio = c(
+  mediasdadoSemClassificacao$FSC.H, 
+  mediasdadoSemClassificacao$BL1.H
+)
 
-tresholded_data = data %>% 
+coeficienteVariacaoInverso = - 1 / coeficienteVariacao
+
+intercepto = pontoMedio[2] - coeficienteVariacaoInverso * pontoMedio[1]
+
+divisaoDados = dadosPROGLN %>%
   mutate(
     hard_assign = ifelse(
-      BL1.H < inverse_slope * FSC.H + y_intercept, "Low", "High"
+      BL1.H < coeficienteVariacaoInverso * FSC.H + intercepto, "Low", "High"
     )
   )
 
-timecourse_ratio = tresholded_data %>% 
-  dplyr::select(c("conditions", "time", "replicate", "hard_assign")) %>%
-  group_by(conditions,time,replicate) %>%
+taxaDivisaoDados = divisaoDados %>%
+  dplyr::select(c("conditions", "step", "replicate", "hard_assign")) %>%
+  group_by(conditions, step, replicate) %>%
   summarize(
     count_high = sum(hard_assign == "High"),
-    count_low = sum(hard_assign == "Low")
+    count_low = sum(hard_assign == "Low"),
+    .groups = "keep"
   ) %>%
   mutate(
     ratio_low_to_high = count_low / count_high
   )
 
-time_mapping = c("2h" = 2, "4h" = 4, "6h" = 6, "8h" = 8,  "preshift" = 0)
-timecourse_ratio$numeric_time = time_mapping[as.character(timecourse_ratio$time)]
+mapeamentoHoras = c("2h" = 2, "4h" = 4, "6h" = 6, "8h" = 8,  "preshift" = 0)
+ordenamentoHoras = c("preshift", "2h", "4h", "6h", "8h")
 
-time_order = c("preshift", "2h", "4h", "6h", "8h")
+taxaDivisaoDados$numeric_time = mapeamentoHoras[
+  as.character(taxaDivisaoDados$step)
+]
 
-timecourse_ratio$time = factor(timecourse_ratio$time, levels = time_order)
-
-mean_ratios = timecourse_ratio %>%
-  group_by(time, conditions) %>%
+taxaDivisaoDados$step = factor(taxaDivisaoDados$step, levels = ordenamentoHoras)
+ 
+mediaTaxas = taxaDivisaoDados %>%
+  group_by(step, conditions) %>%
   summarize(
     mean_ratio = mean(ratio_low_to_high),
-    se = sd(ratio_low_to_high) / sqrt(n())
+    sd_ratio = sd(ratio_low_to_high) / sqrt(n()),
+    .groups = "keep"
   )
 
-colour_map = c(
-  inferno(10)[9], 
-  inferno(10)[2]
-)
-
 ggplot(
-  mean_ratios, 
-  aes(x = time, y = mean_ratio, fill = conditions)
+  mediaTaxas,
+  aes(x = step, y = mean_ratio, fill = conditions)
 ) +
   geom_bar(
-    stat = "identity", 
-    position = position_dodge(width = 0.9),  
-    alpha=0.8, width=0.7
+    stat = "identity",
+    position = position_dodge(width = 0.9),
+    width = 0.7
   ) +
   geom_errorbar(
-    aes(ymin = mean_ratio - se, ymax = mean_ratio + se), 
-    position = position_dodge(width = 0.9), 
+    aes(
+      ymin = mean_ratio - sd_ratio, 
+      ymax = mean_ratio + sd_ratio
+    ),
+    position = position_dodge(width = 0.9),
     width = 0.4
   ) +
   geom_point(
-    data = timecourse_ratio, 
-    aes(x = time, y = ratio_low_to_high, group = conditions), 
-    position = position_dodge(width = 0.9), 
-    size=1, 
-    alpha=1, 
+    data = taxaDivisaoDados,
+    aes(
+      x = step, 
+      y = ratio_low_to_high, 
+      group = conditions
+    ),
+    position = position_dodge(width = 0.9),
+    size = 0.8,
     colour="grey"
   ) +
-  scale_colour_manual(values=colour_map) +
-  scale_fill_manual(values=colour_map) +
-  ylim(NA,1.5) +
-  labs(y = "Ratio Low to High") +
-  theme_bw()+
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1, vjust=0.5),
-    panel.background =  element_blank(),
-    panel.grid.major = element_blank(),
-    panel.grid.minor = element_blank(),
-    axis.title.x= element_blank(),
-    legend.position = "none"
+  ylim(0, 2) +
+  theme_bw(base_size = 8) +
+  labs(
+    colour = "Condições",
+    y = "Razão Low para High",
+    x = "Tempo"
   )
+```
 
-# ggsave("../figures/fig2c_timecourse_ratio.svg", width = 2.1, height = 2, bg='transparent')
-# 
-# p1 = timecourse_ratio %>% filter(time == "4h" & conditions =="PRO") %>% pull(ratio_low_to_high)
-# p2 = timecourse_ratio %>% filter(time == "4h" & conditions =="GLN") %>% pull(ratio_low_to_high)
-# t.test(p1, p2, paired = FALSE, alternative = "greater")
+```{r}
 
+PRO4H = taxaDivisaoDados %>%
+  filter(step == "4h" & conditions =="PRO") %>% 
+  pull(ratio_low_to_high)
 
+GLN4H = taxaDivisaoDados %>% 
+  filter(step == "4h" & conditions =="GLN") %>%
+  pull(ratio_low_to_high)
+
+t.test(PRO4H, GLN4H, paired = FALSE, alternative = "two.sided")
 ```
 
 ## Referências
