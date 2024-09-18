@@ -40,6 +40,8 @@ Bibliotecas são conjuntos de recursos que podem ser reutilizados em diferentes 
 
 -   [**BiocManager**](https://bioconductor.github.io/BiocManager/articles/BiocManager.html)**:** Ferramenta para instalar e gerenciar pacotes do **Bioconductor**, uma coleção de pacotes para análise de dados de genomas e bioinformática no R.
 
+-   [**readxl**](https://cran.r-project.org/web/packages/readxl/index.html)**:** Biblioteca para leitura de arquivos Excel no R.
+
 -   [**tidyverse**](https://www.tidyverse.org/)**:** Um conjunto de bibliotecas no R para manipulação e visualização de dados, que inclui `ggplot2`, `dplyr`, `tidyr`, `readr`, `purrr`, entre outros.
 
 -   [**scales**](https://scales.r-lib.org/)**:** Biblioteca para controle e personalização de escalas e eixos em gráficos no R.
@@ -48,7 +50,7 @@ Bibliotecas são conjuntos de recursos que podem ser reutilizados em diferentes 
 
 -   [**mvtnorm**](https://cran.r-project.org/web/packages/mvtnorm/index.html)**:** Bibliotecapara calcular distribuições e funções relacionadas com a distribuição normal multivariada.
 
-```{r, warning = FALSE}
+```{r, message = FALSE}
 
 bibliotecas = c(
   "BiocManager", 
@@ -57,7 +59,8 @@ bibliotecas = c(
   "flexmix",
   "mvtnorm",
   "gridExtra",
-  "Rmixmod"
+  "Rmixmod",
+  "readxl"
 )
 
 for (biblioteca in bibliotecas) {
@@ -79,6 +82,7 @@ library(flexmix)
 library(mvtnorm)
 library(gridExtra)
 library(Rmixmod)
+library(readxl)
 ```
 
 ## Importando dados
@@ -796,7 +800,7 @@ ggplot(
 
 Os dados replicados seguem a mesma proporção, mas apresentam valores pouco diferentes dos mostrados no artigo. Um ponto a ser destacado é que o ponto médio foi calculado diretamente a partir dos dados obtidos, sem arredondamento, ao contrário do artigo, onde os valores parecem ter sido inseridos manualmente no código. Essa diferença pode ter contribuído para as pequenas variações observadas, embora seja apenas uma hipótese, podem ter outros fatores não observados até então.
 
-No teste t aplicado à razão "Low" para "High" entre as condições temos as seguintes hipóteses:
+No teste t aplicado para razão Low para High temos as seguintes hipóteses:
 
 -   **Hipótese Nula (H₀):** Não há diferença significativa entre as razões Low para High nas condições PRO e GLN no tempo de 4 horas;
 
@@ -825,8 +829,156 @@ A figura mostra a fração de células sem brotos em diferentes subpopulações 
 
 ```{r}
 
+caminhoArquivo = './data/source/fig3b/budscarquant.xlsx' 
+dados = read_excel(caminhoArquivo, sheet="budscar quantificatio")
 
+View(dados)
+
+percentualSemCicatrizes = as.numeric(dados$`...6`[4:9])  
+totalCelulas = as.numeric(dados$`...5`[4:9])        
+
+percentualSemCicatrizes = percentualSemCicatrizes[!is.na(percentualSemCicatrizes)]
+totalCelulas = totalCelulas[!is.na(totalCelulas)]
+
+calcularIntervaloConfianca = function(p, n, z = 1.96) {
+  erroPadrao = sqrt((p * (1 - p)) / n)
+  intervaloInferior = p - z * erroPadrao
+  intervaloSuperior = p + z * erroPadrao
+  return(c(intervaloInferior * 100, intervaloSuperior * 100))  
+}
+
+intervalosConfiancaRecalculados = t(
+  sapply(
+    1:length(percentualSemCicatrizes), 
+    function(i) calcularIntervaloConfianca(
+      percentualSemCicatrizes[i] / 100,  totalCelulas[i]
+    )
+  )
+)
+
+dfIntervalosConfiancaRecalculados = data.frame(
+  PercentualSemCicatrizes = percentualSemCicatrizes,
+  TotalCelulas = totalCelulas,
+  IntervaloInferiorRecalculado = intervalosConfiancaRecalculados[, 1],
+  IntervaloSuperiorRecalculado = intervalosConfiancaRecalculados[, 2]
+)
+
+print("Intervalos de Confiança:")
+print(dfIntervalosConfiancaRecalculados)
+
+validarDados = function(vetor) {
+  all(!is.na(vetor) & is.finite(vetor) & vetor >= 0)
+}
+
+valoresP = c()
+for (i in seq(1, length(percentualSemCicatrizes), 3)) {
+  matrizBaixoAlto = matrix(
+    c(
+      dados$`...3`[3 + i], dados$`...4`[3 + i], # Baixo
+      dados$`...3`[5 + i], dados$`...4`[5 + i]  # Alto
+    ),
+    nrow = 2
+  )
+  
+  if (validarDados(as.vector(matrizBaixoAlto))) {
+    valorPBaixoAlto = fisher.test(matrizBaixoAlto)$p.value
+  } else {
+    valorPBaixoAlto = NA
+    message("Dados inválidos para Baixo vs. Alto na iteração ", i)
+  }
+  
+  valoresP = c(valoresP, valorPBaixoAlto)
+  
+  matrizMisturadoBaixo = matrix(
+    c(
+      dados$`...3`[3 + i], dados$`...4`[3 + i],  # Misturado
+      dados$`...3`[4 + i], dados$`...4`[4 + i]   # Baixo
+    ), 
+    nrow = 2
+  )
+  
+  if (validarDados(as.vector(matrizMisturadoBaixo))) {
+    valorPMisturadoBaixo = fisher.test(matrizMisturadoBaixo)$p.value
+  } else {
+    valorPMisturadoBaixo = NA
+    message("Dados inválidos para Misturado vs. Baixo na iteração ", i)
+  }
+  valoresP = c(valoresP, valorPMisturadoBaixo)
+}
+
+print("P-valores calculados usando o teste de Fisher:")
+print(valoresP)
+
+dadosFiltrados = data.frame(
+  Condicao = rep(
+    c('NLIM-GLN', 'NLIM-GLN', 'NLIM-GLN', 'NLIM-PRO', 'NLIM-PRO', 'NLIM-PRO'), 
+    2
+  ),
+  TempoRegresso = rep(
+    c(
+      'Após triagem', 'Após triagem', 'Após triagem', 'Após triagem', 
+      'Após triagem', 'Após triagem', 'Após 2h de crescimento', 
+      'Após 2h de crescimento', 'Após 2h de crescimento', 
+      'Após 2h de crescimento', 'Após 2h de crescimento', 
+      'Após 2h de crescimento'
+    )
+  ),
+  Populacao = rep(c('Não triado', 'Baixo', 'Alto'), 4),
+  PercentualSemBrotos = c(
+    26.1, 79.2, 31.0, 22.0, 91.0, 27.5, 25.3, 28.4, 27.0, 23.0, 86.1, 30.2
+  ),
+  IntervaloInferior = c(
+    20.1, 74.0, 25.0, 18.0, 86.0, 22.5, 21.0, 23.0, 22.0, 19.0, 81.0, 25.2
+  ),
+  IntervaloSuperior = c(
+    32.1, 84.2, 37.0, 26.0, 96.0, 32.5, 29.6, 33.8, 32.0, 27.0, 91.2, 35.3
+  ),
+  Significancia = c(
+    'ns', '***', 'ns', 'ns', '***', '***', 'ns', 'ns', 'ns', 'ns', '***', '***'
+  )
+)
+
+cores = c('Não triado' = 'purple', 'Alto' = 'red', 'Baixo' = 'orange')
+
+# Criando o gráfico
+grafico = ggplot(
+  dadosFiltrados, 
+  aes(
+    x = Populacao, 
+    y = PercentualSemBrotos, 
+    fill = Populacao
+  )
+) +
+  geom_bar(
+    stat = 'identity', 
+    position = position_dodge(width = 0.8), 
+    width = 0.7
+  ) +
+  geom_errorbar(
+    aes(
+      ymin = IntervaloInferior, 
+      ymax = IntervaloSuperior
+    ), 
+    position = position_dodge(width = 0.8), 
+    width = 0.25
+  ) +
+  scale_fill_manual(values = cores) +
+  facet_wrap(~ TempoRegresso + Condicao, ncol = 2) +
+  labs(
+    title = 'Fração de Células Não Broto sob Diferentes Condições',
+    x = 'População',
+    y = 'Células não broto (%)'
+  ) +
+  theme_minimal() +
+  theme(
+    plot.title = element_text(hjust = 0.5),
+    legend.position = 'none'
+  )
+
+print(grafico)
 ```
+
+Nessa figura, não foi possível replicar os testes de Fisher e os intervalos de confiança gerados no artigo, pois os nossos dados apresentaram valores não finitos ou negativos. No entanto, como os dados finais foram fornecidos, conseguimos gerar e exibir o gráfico.
 
 ### Figura 04
 
@@ -906,8 +1058,6 @@ ggplot(
     x = ""
   )
 ```
-
-#### 4b
 
 ### Figura 06
 
@@ -1077,6 +1227,14 @@ grid.arrange(sensorFPB, sensorATP, ncol = 2, heights = c(0.8, 0.8))
 ```
 
 De acordo com a análise dos boxplots, apesar dos níveis de ATP serem unimodais a nível populacional, a relação entre os níveis de ATP e o tamanho celular é bimodal para a prolina, revelando duas subpopulações distintas. Por outro lado, os níveis de FBP não mostraram diferenças entre as subpopulações, mas sim uma diminuição geral ao longo do tempo.
+
+## Conclusão
+
+Os dados analisados no trabalho confirmam, em sua maioria, as conclusões apresentadas no artigo "Phenotypic heterogeneity follows a growth-viability tradeoff in response to amino acid identity". As subpopulações de células de levedura cultivadas em condições de limitação de nitrogênio apresentam, de fato, heterogeneidade fenotípica, que se reflete na variação do tamanho celular e na expressão diferencial de genes, em resposta aos estímulos ambientais no cultivo.
+
+As análises estatísticas realizadas sugerem que existem diferenças significativas entre as subpopulações expostas à prolina e à glutamina. A prolina, especificamente, induz uma diferenciação mais notável, resultando em uma maior variação no tamanho celular, uma estratégia adotada pelas células para se adaptar a um ambiente com recursos limitados.
+
+Portanto, é possível concluir que a heterogeneidade fenotípica é um mecanismo de regulação em microrganismos importante, permitindo a sobrevivência em condições ambientais variadas.
 
 ## Referências
 
