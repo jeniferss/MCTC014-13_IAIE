@@ -1,0 +1,263 @@
+/* Global Styles */
+body {
+  font-family: "Georgia", "Times New Roman", serif;
+  font-size: 16px;
+  line-height: 1.8;
+  color: #333333;
+  background-color: #FAFAFA;
+  margin: 0;
+  padding: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Merriweather", "Georgia", serif;
+  color: #2A3A5F;
+  margin-bottom: 15px;
+}
+
+h1 {
+  font-size: 2.4em;
+  border-bottom: 2px solid #D1D1D1;
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+}
+
+h2 {
+  font-size: 2em;
+  border-bottom: 1px solid #D1D1D1;
+  padding-bottom: 7px;
+  margin-bottom: 20px;
+}
+
+h3 {
+  font-size: 1.6em;
+  margin-bottom: 15px;
+}
+
+h4 {
+  font-size: 1.4em;
+  margin-bottom: 10px;
+}
+
+h5, h6 {
+  font-size: 1.2em;
+  margin-bottom: 8px;
+}
+
+p {
+  text-align: justify;
+  margin: 10px 0;
+}
+
+code {
+  font-family: "Courier New", Courier, monospace;
+  background-color: #F5F5F5;
+  padding: 3px 6px;
+  border-radius: 4px;
+}
+
+/* Table Styles */
+table {
+  width: 100%;
+  margin-bottom: 20px;
+  border-collapse: collapse;
+  border-spacing: 0;
+  background-color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+table th, table td {
+  padding: 10px 15px;
+  text-align: left;
+  border-bottom: 1px solid #E0E0E0;
+}
+
+table th {
+  background-color: #2A3A5F;
+  color: white;
+  font-weight: bold;
+}
+
+table tr:nth-child(even) {
+  background-color: #F9F9F9;
+}
+
+table caption {
+  font-size: 1.2em;
+  margin: 15px 0;
+  font-style: italic;
+  text-align: left;
+  color: #555;
+}
+
+/* Blockquote Styles */
+blockquote {
+  margin: 15px 0;
+  padding: 15px 25px;
+  background-color: #F5F5F5;
+  border-left: 5px solid #2A3A5F;
+  font-style: italic;
+}
+
+blockquote p {
+  margin: 0;
+}
+
+/* Code Block Styling */
+pre {
+  background-color: #F5F5F5;
+  padding: 10px;
+  border-radius: 5px;
+  border-left: 4px solid #2A3A5F;
+  overflow: auto;
+}
+
+pre code {
+  font-size: 0.95em;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+/* Figure and Caption */
+figure {
+  margin: 25px 0;
+  text-align: center;
+}
+
+figure img {
+  max-width: 90%;
+  height: auto;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+figcaption {
+  margin-top: 10px;
+  font-style: italic;
+  color: #555;
+}
+
+/* Footer */
+footer {
+  text-align: center;
+  margin-top: 30px;
+  padding: 10px;
+  background-color: #2A3A5F;
+  color: white;
+  font-size: 0.9em;
+}
+
+/* Inline Math and Equations */
+.math-inline {
+  background-color: #F9F9F9;
+  padding: 2px 4px;
+  border-radius: 4px;
+  color: #2A3A5F;
+}
+
+.math-block {
+  display: block;
+  padding: 15px;
+  background-color: #F5F5F5;
+  border: 1px solid #E0E0E0;
+  margin: 20px 0;
+  text-align: center;
+  font-size: 1.2em;
+  border-radius: 8px;
+}
+
+/* Citations */
+cite {
+  font-style: italic;
+  color: #888;
+}
+
+/* Link Styles */
+a {
+  color: #2A3A5F;
+  text-decoration: none;
+  border-bottom: 2px solid #2A3A5F;
+}
+
+a:hover {
+  color: #555;
+  border-bottom: 2px solid #555;
+}
+
+/* Special Emphasis */
+strong {
+  font-weight: bold;
+  color: #2A3A5F;
+}
+
+em {
+  font-style: italic;
+  color: #555;
+}
+
+/* Estilo do ??ndice */
+#toc {
+  position: fixed;
+  top: 10px;
+  left: 20px;
+  width: 220px;
+  background-color: #fff;
+  padding: 15px;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  font-size: 14px;
+  max-height: calc(100vh - 20px);
+  overflow-y: auto;
+}
+
+#toc ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+#toc li {
+  margin-bottom: 8px;
+}
+
+#toc a {
+  text-decoration: none;
+  color: #0073e6;
+}
+
+#toc a:hover {
+  color: #005bb5;
+  text-decoration: underline;
+}
+
+#toc .active {
+  background-color: #d0eaff;
+  color: #003f7f;
+  padding: 4px 8px;
+  border-radius: 5px;
+}
+
+/* Altera????o da cor do ??ndice selecionado */
+#toc .active {
+  background-color: #d0eaff;
+  color: #003f7f;
+}
+
+/* Print Styles */
+@media print {
+  body {
+    background-color: white;
+    color: black;
+  }
+
+  a {
+    color: black;
+  }
+
+  table {
+    border-collapse: collapse;
+  }
+
+  table th, table td {
+    border: 1px solid black;
+  }
+}
