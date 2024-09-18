@@ -1063,6 +1063,8 @@ ggplot(
 
 Nesta etapa, foi estudada como as diferenças entre populações High e Low poderiam se traduzir em variações fisiológicas. Usando sensores metabólicos, foram medidos dois parâmetros: o estado energético e a atividade metabólica da célula.
 
+Também usamos como apoio uma funcção de clusterização forenecida pelos próprios autores do artigo.
+
 ```{r}
 
 performClusteringRmixmod = function(dados, modelo) {
