@@ -1,8 +1,12 @@
 ---
-title: "Phenotypic heterogeneity follows a growth-viability tradeoff in response to
-  amino acid identity"
+title: "Phenotypic heterogeneity follows a growth-viability tradeoff in response to amino acid identity"
 author: "Grupo 05"
-output: html_document
+output:
+  html_document:
+    css: estilo.css
+    toc: true  
+    toc_depth: 3  
+    toc_float: true  
 ---
 
 ## Artigo
@@ -46,9 +50,9 @@ Bibliotecas são conjuntos de recursos que podem ser reutilizados em diferentes 
 
 -   [**scales**](https://scales.r-lib.org/)**:** Biblioteca para controle e personalização de escalas e eixos em gráficos no R.
 
--   [**flexmix**](https://cran.r-project.org/web/packages/flexmix/index.html)**:** Biblioteca parapara modelagem de mistura de modelos com diferentes distribuições.
+-   [**flexmix**](https://cran.r-project.org/web/packages/flexmix/index.html)**:** Biblioteca para modelagem de mistura de modelos com diferentes distribuições.
 
--   [**mvtnorm**](https://cran.r-project.org/web/packages/mvtnorm/index.html)**:** Bibliotecapara calcular distribuições e funções relacionadas com a distribuição normal multivariada.
+-   [**mvtnorm**](https://cran.r-project.org/web/packages/mvtnorm/index.html)**:** Bibliote capara calcular distribuições e funções relacionadas com a distribuição normal multivariada.
 
 ```{r, message = FALSE}
 
