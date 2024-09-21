@@ -1,6 +1,6 @@
 ---
 title: "Phenotypic heterogeneity follows a growth-viability tradeoff in response to amino acid identity"
-author: "Grupo 05"
+author: "Grupo 04"
 output:
   html_document:
     css: estilo.css
@@ -187,7 +187,7 @@ resumoObservacoes
 
 ### Mapeamento de dados
 
-Uma das características do artigo foi a separação das observações com base na exposição das células, no tempo de ação e no padrão de replicação. O padrão de nomenclatura utilizado foi da mesma forma que o artigo original, onde "PRO3.preshift" pode ser interpretado como: "PRO" indicando um meio que contém prolina, "preshift" referindo-se ao tempo ou etapa preshift (pode ser ainda 2 horas, 4 horas, 6 horas ou 8 horas), e "3" como "replicação do tipo 3".
+Uma das características do artigo foi a separação das observações com base na exposição das células, no tempo de ação e no padrão de replicação. O padrão de nomenclatura utilizado foi da mesma forma que o artigo original, onde "PRO3.preshift" pode ser interpretado como: "PRO" indicando um meio que contém prolina, "preshift" referindo-se ao tempo ou etapa preshift (pode ser ainda 2 horas, 4 horas, 6 horas ou 8 horas), e "rep3" como "replicação do tipo 3".
 
 Os dados referentes aos diferentes meios e horários foram unidos em um único dataframe, com estrutura similar de uma tabela. Para classificar esses dados, foram adicionadas três novas colunas: *condition* (tipo de meio de exposição), *step* (tempo ou etapa de coleta da amostra) e *replicate* (padrão de replicação).
 
