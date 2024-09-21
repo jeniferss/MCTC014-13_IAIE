@@ -36,7 +36,7 @@ Este estudo revela que *S. cerevisiae* exposta a uma redução de nitrogênio ap
 
 *\* processo pelo qual organismos, como fungos, bactérias e plantas, produzem esporos como forma de reprodução [1].*
 
-Considerando o tema abordado no artigo e a disponibilização dos dados, o objetivo deste relatório é replicar as análises realizadas, utilizando métodos de inferência estatística por meio do software R. Pretende-se verificar se é chegar à resultados semelhantes e avaliar se esses resultados são consistentes com a teoria e a prática ensinadas na disciplina.
+Considerando o tema abordado no artigo e a disponibilização dos dados, o objetivo deste relatório é replicar as análises realizadas, utilizando métodos de inferência estatística por meio do software R. Pretende-se verificar se é possível chegar à resultados semelhantes e avaliar se esses resultados são consistentes com a teoria e a prática ensinadas na disciplina.
 
 ## Importando Bibliotecas
 
@@ -552,9 +552,7 @@ grid.arrange(
 )
 ```
 
-Os dados replicados se mostaram consistentes com os do artigo, manatendo a mesma proporção e valores obtidos.
-
-Além dos gráficos, o estudo aplicou a ferramenta do teste t, que é técnica utilizada para comparar as médias de dois grupos e determinar se há uma diferença significativa entre elas.
+Os dados replicados se mostaram consistentes com os do artigo, mantendo a mesma proporção e valores obtidos. Além dos gráficos, o estudo aplicou a ferramenta do teste t, que é técnica utilizada para comparar as médias de dois grupos e determinar se há uma diferença significativa entre elas.
 
 Nessa etapa, foi realizado um teste t não pareado, em que:
 
@@ -1067,7 +1065,7 @@ ggplot(
 
 Nesta etapa, foi estudada como as diferenças entre populações High e Low poderiam se traduzir em variações fisiológicas. Usando sensores metabólicos, foram medidos dois parâmetros: o estado energético e a atividade metabólica da célula.
 
-Também usamos como apoio uma funcção de clusterização forenecida pelos próprios autores do artigo.
+Também usamos como apoio uma função de clusterização fornecida pelos próprios autores do artigo.
 
 ```{r}
 
